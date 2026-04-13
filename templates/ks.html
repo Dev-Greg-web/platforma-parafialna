@@ -103,7 +103,13 @@
         </section>
 
         <section id="section-podsumowanie" class="admin-section">
-            <h1>Podsumowanie Statystyk</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h1>Podsumowanie Statystyk</h1>
+                <a href="{{ url_for('export_raport') }}" class="btn-save" style="text-decoration: none; padding: 10px 20px; background: #27ae60; display: inline-flex; align-items: center; gap: 10px;">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    Pobierz Raport Excel
+                </a>
+            </div>
             <div class="table-wrapper">
                 <table class="admin-table">
                     <thead>

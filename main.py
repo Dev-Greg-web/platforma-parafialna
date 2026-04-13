@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory
+from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta, date
 import os
 from dotenv import load_dotenv
+import pandas as pd
+import io
 
 load_dotenv()
 
@@ -309,6 +311,52 @@ def static_from_root():
 @app.route('/sitemap.xml')
 def sitemap_from_root():
     return send_from_directory(app.static_folder, request.path[1:])
+
+@app.route('/export_raport')
+def export_raport():
+    # 1. BRAMKARZ: Tylko Szef i Ksiądz mogą pobierać raporty
+    if session.get('user_role') not in ['admin', 'ksiądz']: 
+        flash("Brak uprawnień do pobierania raportów.", "danger")
+        return redirect(url_for('dashboard_page'))
+
+    # 2. Pobieramy wszystkie dane z bazy
+    all_attendance = db.session.query(Attendance, Users).join(Users).all()
+    all_users = Users.query.all()
+    
+    # 3. Zwijamy dane (Przetwarzanie)
+    data = []
+    for u in all_users:
+        his_atts = [att for att, usr in all_attendance if usr.id == u.id]
+        total = len(his_atts)
+        morning = len([a for a in his_atts if a.typ_mszy == 'poranna'])
+        evening = len([a for a in his_atts if a.typ_mszy == 'wieczorna'])
+        other = total - (morning + evening)
+        
+        data.append({
+            'Imię i Nazwisko': f"{u.imie} {u.nazwisko}",
+            'Pseudonim (Login)': u.username,
+            'Suma Służb': total,
+            'Poranne': morning,
+            'Wieczorne': evening,
+            'Inne': other
+        })
+
+    # 4. Magia PANDAS - Tworzymy DataFrame (Tabelę analityczną)
+    df = pd.DataFrame(data)
+    
+    # Sortujemy automatycznie od najlepszego do najgorszego!
+    df = df.sort_values(by='Suma Służb', ascending=False)
+
+    # 5. Zapisujemy do pamięci RAM (Zamiast na dysk serwera)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Ranking_Ministrantow')
+    
+    output.seek(0) # Cofamy "kursor" zapisu na początek pliku
+
+    # 6. Wysyłamy plik bezpośrednio do przeglądarki użytkownika
+    nazwa_pliku = f"Raport_Ministranci_{date.today().strftime('%Y-%m-%d')}.xlsx"
+    return send_file(output, download_name=nazwa_pliku, as_attachment=True)
 
 if __name__ == "__main__":
     with app.app_context(): 
