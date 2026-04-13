@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - {{ user }}{% endblock %}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-wrapper">
+        <aside class="dashboard-sidebar">
+            <header>Menu Ministranta</header>
+            <nav>
+                <button onclick="switchTab('ogloszenia')" id="tab-btn-ogloszenia" class="nav-btn active">
+                    Tablica Ogłoszeń
+                </button>
+                <button onclick="switchTab('sluzby')" id="tab-btn-sluzby" class="nav-btn">
+                    Zgłoś Służbę
+                </button>
+            </nav>
+            <a href="{{ url_for('logout') }}" class="btn-logout-sidebar">Wyloguj się</a>
+        </aside>
+
+        <main class="dashboard-main">
+            
+            <section id="section-ogloszenia" class="dashboard-tab active">
+                <h1>Tablica Ogłoszeń</h1>
+                {% if announcements %}
+                    <div class="announcements-container">
+                        {% for og in announcements %}
+                        <div class="announcement-card">
+                            <div class="announcement-meta">
+                                <span class="announcement-time">{{ og.data_wystawienia.strftime('%d.%m %H:%M') }}</span>
+                                <span class="announcement-badge">WAŻNE</span>
+                            </div>
+                            <p class="announcement-content">{{ og.tresc }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-data">Brak nowych ogłoszeń od Szefa.</div>
+                {% endif %}
+            </section>
+
+            <section id="section-sluzby" class="dashboard-tab">
+                <h1>Zgłoś nową służbę</h1>
+                <div class="attendance-card">
+                    <form action="/add_attendance" method="POST" id="attendance-form">
+                        <div class="field-group">
+                            <label for="date">Data służby:</label>
+                            <input type="date" name="date" id="date" min="{{ min_date }}" max="{{ today }}" value="{{ today }}" required>
+                        </div>
+
+                        <div class="field-group">
+                            <label for="typ_mszy">Rodzaj mszy:</label>
+                            <select name="typ_mszy" id="typ_mszy" onchange="toggleInna()" required>
+                                <option value="poranna">Poranna</option>
+                                <option value="wieczorna">Wieczorna</option>
+                                <option value="inna">Inna (np. Ślub, Pogrzeb)</option>
+                            </select>
+                        </div>
+
+                        <div class="field-group" id="group_inna" style="display: none;">
+                            <label for="nazwa_inna">Nazwa mszy:</label>
+                            <input type="text" name="nazwa_inna" id="nazwa_inna" placeholder="Wpisz nazwę...">
+                        </div>
+
+                        <div class="field-group">
+                            <label for="godzina">Godzina:</label>
+                            <input type="time" name="godzina" id="godzina" required>
+                        </div>
+
+                        <button type="submit" class="btn-submit">Zapisz moją obecność</button>
+                    </form>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Tłumaczenie "Na Małpę": To jest funkcja, która chowa i pokazuje zakładki
+    function switchTab(tabName) {
+        // 1. Schowaj wszystkie sekcje i wyłącz aktywne guziki
+        document.querySelectorAll('.dashboard-tab').forEach(section => section.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+        // 2. Pokaż tę sekcję, którą kliknąłeś i podświetl guzik
+        document.getElementById('section-' + tabName).classList.add('active');
+        document.getElementById('tab-btn-' + tabName).classList.add('active');
+    }
+
+    function toggleInna() {
+        var select = document.getElementById("typ_mszy");
+        var groupInna = document.getElementById("group_inna");
+        var inputInna = document.getElementById("nazwa_inna");
+
+        if (select.value === "inna") {
+            groupInna.style.display = "flex";
+            groupInna.style.flexDirection = "column";
+            inputInna.required = true;
+        } else {
+            groupInna.style.display = "none";
+            inputInna.required = false;
+        }
+    }
+</script>
+{% endblock %}      

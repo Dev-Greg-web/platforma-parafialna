@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}System Ministranci - Logowanie{% endblock %}
+
+{% block content %}
+    <div class="signup-section">
+        <header>Rejestracja</header>
+        <form action="/auth_process" method="post">
+            <div class="field-group">
+                <label for="imie">Imię:</label>
+                <input type="text" name="imie" id="imie">
+            </div>
+            <div class="field-group">
+                <label for="nazwisko">Nazwisko:</label>
+                <input type="text" name="nazwisko" id="nazwisko">
+            </div>
+            <div class="field-group">
+                <label for="username_reg">Nazwa Użytkownika:</label>
+                <input type="text" name="username" id="username_reg" required>
+            </div>
+            <div class="field-group">
+                <label for="haslo_reg">Hasło:</label>
+                <input type="password" name="haslo" id="haslo_reg" required>
+            </div>
+            <button type="submit" class="btn" name="action" value="register">Zarejestruj się</button>
+        </form>
+    </div>
+
+    <div class="login-section">
+        <header>Logowanie</header>
+        <form action="/auth_process" method="post">
+            <div class="field-group">
+                <label for="user_log" class="purple-bold">Nazwa Użytkownika:</label>
+                <input type="text" name="username" id="user_log" required>
+            </div>
+            <div class="field-group">
+                <label for="pass_log" class="purple-bold">Hasło:</label>
+                <input type="password" name="haslo" id="pass_log" required>
+            </div>
+            <a href="forget-password">Zapomniałeś hasła?</a>
+            <button type="submit" class="btn" name="action" value="login">Zaloguj się!</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {% if success_login %}
+    <script>
+        // Twoja mechanika delay 2s
+        setTimeout(function() {
+            window.location.href = "{{ url_for('dashboard_page') }}";
+        }, 2000); 
+    </script>
+    {% endif %}
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Panel Księdza{% endblock %}
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            Panel Księdza
+        </div>
+        <nav class="sidebar-nav">
+            <button onclick="showSection('sluzby')" id="btn-sluzby" class="nav-btn active">
+                Przegląd Służb
+            </button>
+            <button onclick="showSection('ogloszenia')" id="btn-ogloszenia" class="nav-btn">
+                Tablica Ogłoszeń
+            </button>
+            <button onclick="showSection('podsumowanie')" id="btn-podsumowanie" class="nav-btn">
+                Podsumowanie
+            </button>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="btn-logout">Wyloguj</a>
+        </div>
+    </aside>
+
+    <main class="admin-content">
+        
+        <section id="section-sluzby" class="admin-section active">
+            <h1>Przegląd Służb</h1>
+            
+            <div class="user-filters">
+                <button class="filter-btn active" onclick="filterUser('all')">Wszyscy</button>
+                {% for u in users %}
+                    <button class="filter-btn" onclick="filterUser('{{ u.username }}')">{{ u.username }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Ministrant</th>
+                            <th>Data Służby</th>
+                            <th>Godzina Mszy</th>
+                            <th>Rodzaj Mszy</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-tbody">
+                        {% for att, user in attendances %}
+                        <tr class="attendance-row" data-username="{{ user.username }}">
+                            <td class="user-cell">
+                                <strong>{{ user.username }}</strong>
+                                <span>({{ user.imie }} {{ user.nazwisko }})</span>
+                            </td>
+                            <td>{{ att.data_sluzby.strftime('%d.%m.%Y') }}</td>
+                            <td>{{ att.godzina }}</td>
+                            <td>
+                                {% if att.typ_mszy == 'inna' %}
+                                    <span class="badge badge-other">{{ att.nazwa_inna }}</span>
+                                {% else %}
+                                    <span class="badge badge-standard">{{ att.typ_mszy|capitalize }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="section-ogloszenia" class="admin-section">
+            <h1>Tablica Ogłoszeń</h1>
+            
+            <div class="table-wrapper" style="margin-bottom: 30px;">
+                <form action="/admin/add_announcement" method="POST" style="display: flex; gap: 15px; padding: 15px;">
+                    <input type="text" name="tresc" placeholder="Wpisz nowe ogłoszenie dla ministrantów..." required 
+                           style="flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--accent); background: var(--bg-dark); color: white;">
+                    <button type="submit" class="btn-save" style="width: 200px; height: 45px;">Opublikuj</button>
+                </form>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Treść Ogłoszenia</th>
+                            <th>Data publikacji</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for og in announcements %}
+                        <tr>
+                            <td>{{ og.tresc }}</td>
+                            <td>{{ og.data_wystawienia.strftime('%d.%m %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="section-podsumowanie" class="admin-section">
+            <h1>Podsumowanie Statystyk</h1>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Ministrant</th>
+                            <th>Suma Służb</th>
+                            <th>Poranne</th>
+                            <th>Wieczorne</th>
+                            <th>Inne</th>
+                            <th>Ranking</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in stats %}
+                        <tr>
+                            <td><strong>{{ s.username }}</strong><br><small>{{ s.full_name }}</small></td>
+                            <td style="font-size: 1.5em; color: var(--warning);">{{ s.total }}</td>
+                            <td>{{ s.morning }}</td>
+                            <td>{{ s.evening }}</td>
+                            <td>{{ s.other }}</td>
+                            <td>
+                                {% if s.total >= 20 %}
+                                    <span class="badge" style="background: gold; color: black;">LIDER</span>
+                                {% elif s.total >= 5 %}
+                                    <span class="badge" style="background: silver; color: black;">AKTYWNY</span>
+                                {% else %}
+                                    <span class="badge" style="background: #cd7f32;">POCZĄTKUJĄCY</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- SYSTEM FILTROWANIA (Zostaje, bo jest super przydatny do przeglądania) ---
+    function filterUser(username) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        const rows = document.querySelectorAll('.attendance-row');
+        rows.forEach(row => {
+            if (username === 'all' || row.dataset.username === username) {
+                row.style.display = ''; 
+            } else {
+                row.style.display = 'none'; 
+            }
+        });
+    }
+
+    // --- SYSTEM ZAKŁADEK ---
+    function showSection(name) {
+        // Ukrywamy sekcje
+        document.getElementById('section-sluzby').style.display = 'none';
+        document.getElementById('section-ogloszenia').style.display = 'none';
+        document.getElementById('section-podsumowanie').style.display = 'none';
+        
+        // Gasimy guziki
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        
+        // Pokazujemy wybraną i zapalamy guzik
+        document.getElementById('section-' + name).style.display = 'block';
+        document.getElementById('btn-' + name).classList.add('active');
+    }
+</script>
+{% endblock %}

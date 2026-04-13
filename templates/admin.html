@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% block title %}Panel Sterowania Szefa{% endblock %}
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">Szef Menu</div>
+        <nav class="sidebar-nav">
+            <button onclick="showSection('sluzby')" id="btn-sluzby" class="nav-btn active">Zarządzanie Służbami</button>
+            <button onclick="showSection('uzytkownicy')" id="btn-uzytkownicy" class="nav-btn">Zarządzanie Użytkownikami</button>
+            <button onclick="showSection('ogloszenia')" id="btn-ogloszenia" class="nav-btn">Tablica Ogłoszeń</button>
+            <button onclick="showSection('podsumowanie')" id="btn-podsumowanie" class="nav-btn">Podsumowanie</button>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="btn-logout">Wyloguj</a>
+        </div>
+    </aside>
+
+    <main class="admin-content">
+        
+        <section id="section-sluzby" class="admin-section active">
+            <h1>Zarządzanie Służbami</h1>
+            <div class="user-filters">
+                <button class="filter-btn active" onclick="filterUser('all')">Wszyscy</button>
+                {% for u in users %}
+                    <button class="filter-btn" onclick="filterUser('{{ u.username }}')">{{ u.username }}</button>
+                {% endfor %}
+            </div>
+
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Użytkownicy</th>
+                            <th>Data Służby</th>
+                            <th>Godzina Mszy</th>
+                            <th>Rodzaj Mszy</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-tbody">
+                        {% for att, user in attendances %}
+                        <tr class="attendance-row" data-username="{{ user.username }}">
+                            <td class="user-cell">
+                                <strong>{{ user.username }}</strong>
+                                <span>({{ user.imie }} {{ user.nazwisko }})</span>
+                            </td>
+                            <td>{{ att.data_sluzby.strftime('%d.%m.%Y') }}</td>
+                            <td>{{ att.godzina }}</td>
+                            <td>
+                                {% if att.typ_mszy == 'inna' %}
+                                    <span class="badge badge-other">{{ att.nazwa_inna }}</span>
+                                {% else %}
+                                    <span class="badge badge-standard">{{ att.typ_mszy|capitalize }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="dropbtn" onclick="toggleMenu('menu-att-{{att.id}}')">⋮</button>
+                                    <div id="menu-att-{{att.id}}" class="dropdown-content">
+                                        <a href="javascript:void(0)" onclick="openEditModal('{{att.id}}', '{{att.data_sluzby}}', '{{att.godzina}}', '{{att.typ_mszy}}', '{{att.nazwa_inna or ''}}')">Popraw wpis</a>
+                                        <a href="{{ url_for('delete_entry', id=att.id) }}" class="text-danger" onclick="return confirm('Usunąć?')">Usuń wpis</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="section-uzytkownicy" class="admin-section">
+            <h1>Zarządzanie Użytkownikami</h1>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Imię</th>
+                            <th>Nazwisko</th>
+                            <th>User</th>
+                            <th>Hasło</th>
+                            <th>Ranga</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>{{ u.imie }}</td>
+                            <td>{{ u.nazwisko }}</td>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td><code style="color: #00ff00;">{{ u.password }}</code></td>
+                            <td>
+                                <span class="badge" style="background: {{ 'var(--warning)' if u.role == 'admin' else '#673ab7' if u.role == 'ksiądz' else '#444' }}; color: {{ 'black' if u.role == 'admin' else 'white' }};">
+                                    {{ u.role|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="dropbtn" onclick="toggleMenu('menu-usr-{{u.id}}')">⋮</button>
+                                    <div id="menu-usr-{{u.id}}" class="dropdown-content">
+                                        <a href="javascript:void(0)" onclick="openUserEditModal('{{u.id}}', '{{u.imie}}', '{{u.nazwisko}}', '{{u.username}}', '{{u.password}}', '{{u.role}}')">Popraw dane / Zmień Rangę</a>
+                                        <a href="{{ url_for('delete_user', id=u.id) }}" class="text-danger" onclick="return confirm('Usunąć?')">Usuń</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="section-ogloszenia" class="admin-section">
+            <h1>Tablica Ogłoszeń</h1>
+            <div class="table-wrapper" style="margin-bottom: 30px;">
+                <form action="/admin/add_announcement" method="POST" style="display: flex; gap: 15px; padding: 15px;">
+                    <input type="text" name="tresc" placeholder="Co chcesz ogłosić?" required 
+                           style="flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--accent); background: var(--bg-dark); color: white;">
+                    <button type="submit" class="btn-save" style="width: 200px; height: 45px;">Opublikuj</button>
+                </form>
+            </div>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>Treść Ogłoszenia</th><th>Data publikacji</th><th>Akcje</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for og in announcements %}
+                        <tr>
+                            <td>{{ og.tresc }}</td>
+                            <td>{{ og.data_wystawienia.strftime('%d.%m %H:%M') }}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="dropbtn" onclick="toggleMenu('menu-og-{{og.id}}')">⋮</button>
+                                    <div id="menu-og-{{og.id}}" class="dropdown-content">
+                                        <a href="javascript:void(0)" onclick="openOgEditModal('{{og.id}}', '{{og.tresc}}')">Popraw treść</a>
+                                        <a href="{{ url_for('delete_announcement', id=og.id) }}" class="text-danger" onclick="return confirm('Usunąć?')">Usuń</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="section-podsumowanie" class="admin-section">
+            <h1>Podsumowanie Statystyk</h1>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>Ministrant</th><th>Suma Służb</th><th>Poranne</th><th>Wieczorne</th><th>Inne</th><th>Ranking</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for s in stats %}
+                        <tr>
+                            <td><strong>{{ s.username }}</strong><br><small>{{ s.full_name }}</small></td>
+                            <td style="font-size: 1.5em; color: var(--warning);">{{ s.total }}</td>
+                            <td>{{ s.morning }}</td>
+                            <td>{{ s.evening }}</td>
+                            <td>{{ s.other }}</td>
+                            <td>
+                                {% if s.total >= 20 %}
+                                    <span class="badge" style="background: gold; color: black;">LIDER</span>
+                                {% elif s.total >= 5 %}
+                                    <span class="badge" style="background: silver; color: black;">AKTYWNY</span>
+                                {% else %}
+                                    <span class="badge" style="background: #cd7f32;">POCZĄTKUJĄCY</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <header>Poprawianie wpisu</header>
+            <form id="editForm" method="POST">
+                <div class="field-group"><label>Data:</label><input type="date" name="date" id="editDate" required></div>
+                <div class="field-group"><label>Godzina:</label><input type="time" name="godzina" id="editTime" required></div>
+                <div class="field-group"><label>Rodzaj:</label>
+                    <select name="typ_mszy" id="editType" onchange="toggleInnaEdit()">
+                        <option value="poranna">Poranna</option><option value="wieczorna">Wieczorna</option><option value="inna">Inna</option>
+                    </select>
+                </div>
+                <div class="field-group" id="groupInnaEdit" style="display:none;"><input type="text" name="nazwa_inna" id="editInna"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal('editModal')">Anuluj</button>
+                    <button type="submit" class="btn btn-save">Zapisz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <header>Poprawianie Ministranta</header>
+            <form id="editUserForm" method="POST">
+                <div class="field-group"><label>Imię:</label><input type="text" name="imie" id="editUserImie" required></div>
+                <div class="field-group"><label>Nazwisko:</label><input type="text" name="nazwisko" id="editUserNazwisko" required></div>
+                <div class="field-group"><label>Login:</label><input type="text" name="username" id="editUserLogin" required></div>
+                <div class="field-group"><label>Hasło:</label><input type="text" name="password" id="editUserPass" required></div>
+                <div class="field-group">
+                    <label>Ranga w systemie:</label>
+                    <select name="role" id="editUserRole" style="width: 100%; background: var(--bg-dark); color: white; border: 1px solid var(--accent); padding: 10px; border-radius: 8px;">
+                        <option value="user">Użytkownik (Ministrant)</option>
+                        <option value="ksiądz">Ksiądz (Podgląd + Ogłoszenia)</option>
+                        <option value="admin">Admin (Szef Wszystkiego)</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal('editUserModal')">Anuluj</button>
+                    <button type="submit" class="btn btn-save">Zapisz zmiany</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editOgModal" class="modal">
+        <div class="modal-content">
+            <header>Poprawianie Ogłoszenia</header>
+            <form id="editOgForm" method="POST">
+                <div class="field-group">
+                    <label>Treść:</label>
+                    <textarea name="tresc" id="editOgTresc" rows="4" required style="width: 100%; background: var(--bg-dark); color: white; border: 1px solid var(--accent); border-radius: 8px; padding: 10px;"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal('editOgModal')">Anuluj</button>
+                    <button type="submit" class="btn btn-save">Zapisz zmiany</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function filterUser(username) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        const rows = document.querySelectorAll('.attendance-row');
+        rows.forEach(row => {
+            if (username === 'all' || row.dataset.username === username) {
+                row.style.display = ''; 
+            } else {
+                row.style.display = 'none'; 
+            }
+        });
+    }
+
+    function toggleMenu(id) {
+        document.querySelectorAll('.dropdown-content').forEach(m => {
+            if(m.id !== id) m.classList.remove('show');
+        });
+        document.getElementById(id).classList.toggle('show');
+    }
+
+    function openEditModal(id, date, time, type, inna) {
+        document.getElementById('editForm').action = "/admin/edit/" + id;
+        document.getElementById('editDate').value = date;
+        document.getElementById('editTime').value = time;
+        document.getElementById('editType').value = type;
+        document.getElementById('editInna').value = inna;
+        toggleInnaEdit();
+        document.getElementById('editModal').style.display = "flex";
+    }
+
+    // TUTA JEST TA ZMIANA - ODBIERA I WSTAWIA RANGĘ
+    function openUserEditModal(id, imie, nazwisko, login, pass, role) {
+        document.getElementById('editUserForm').action = "/admin/edit_user/" + id;
+        document.getElementById('editUserImie').value = imie;
+        document.getElementById('editUserNazwisko').value = nazwisko;
+        document.getElementById('editUserLogin').value = login;
+        document.getElementById('editUserPass').value = pass;
+        document.getElementById('editUserRole').value = role; // Ustawia wartość <select>
+        document.getElementById('editUserModal').style.display = "flex";
+    }
+
+    function openOgEditModal(id, tresc) {
+        document.getElementById('editOgForm').action = "/admin/edit_announcement/" + id;
+        document.getElementById('editOgTresc').value = tresc;
+        document.getElementById('editOgModal').style.display = "flex";
+    }
+
+    function closeModal(modalId) { document.getElementById(modalId).style.display = "none"; }
+    
+    function toggleInnaEdit() {
+        const type = document.getElementById('editType').value;
+        document.getElementById('groupInnaEdit').style.display = (type === 'inna') ? 'block' : 'none';
+    }
+
+    function showSection(name) {
+        document.getElementById('section-sluzby').style.display = 'none';
+        document.getElementById('section-uzytkownicy').style.display = 'none';
+        document.getElementById('section-ogloszenia').style.display = 'none';
+        document.getElementById('section-podsumowanie').style.display = 'none'; 
+        
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById('section-' + name).style.display = 'block';
+        document.getElementById('btn-' + name).classList.add('active');
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            document.querySelectorAll('.dropdown-content').forEach(m => m.classList.remove('show'));
+        }
+    }
+</script>
+{% endblock %}
