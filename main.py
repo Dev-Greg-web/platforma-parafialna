@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory, send_file
-from models import Users, Attendance, Annountcment
+from models import Users, Attendance, Announcement
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta, date
 import os
