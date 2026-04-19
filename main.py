@@ -11,8 +11,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("TAJNE_HASLO")
 db_url = os.getenv("DATABASE_URL", "sqlite:///ministranci.db")
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ministranci.db"
 app.permanent_session_lifetime = timedelta(minutes=15)
 
