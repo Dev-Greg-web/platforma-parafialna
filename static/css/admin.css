@@ -163,17 +163,34 @@ h1{
 .modal-content {
     background: var(--bg-card); padding: 30px; border-radius: 20px; width: 400px;
 }
+.btn-logout, .btn-logout-sidebar {
+    background: #eb4d4b;
+    display: flex;             /* Flexbox ustawia wszystko idealnie na środku */
+    justify-content: center;
+    align-items: center;
+    min-height: 52px;          /* Minimalna wysokość, żeby zmieścić "g" i "j" */
+    padding: 10px 15px;
+    border-radius: 10px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    line-height: normal;       /* Resetuje sztywne wysokości z przeglądarki */
+    margin-top: auto;          /* Trzyma przycisk na dole w sidebarze */
+}
+
 .btn-logout {
     background: var(--danger);
-    display: block;
-    text-align: center;
-    padding: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: normal; /* To zapobiega ucinaniu liter typu "g" czy "j" */
+    min-height: 50px;
+    padding: 10px 15px;
     border-radius: 10px;
     color: white;
     text-decoration: none;
     font-weight: bold;
 }
-
 /* POPRAWKA KONTENERA: Robimy go responsywnym */
 .container {
     width: 95%;
@@ -184,38 +201,50 @@ h1{
 /* --- RESPONSIVE DESIGN (TELEFONY I TABLETY) --- */
 @media (max-width: 768px) {
     .admin-wrapper {
-        flex-direction: column; /* Układa sidebar nad treścią, zamiast obok */
+        flex-direction: column;
     }
 
     .sidebar {
-        width: 100%; /* Sidebar zajmuje całą szerokość */
-        padding: 20px;
+        width: 100%;
+        height: auto; /* ROZWIĄZANIE: Sidebar dopasowuje się do zawartości, a nie zajmuje cały ekran */
+        padding: 15px; /* Zmniejszony margines wewnętrzny */
         border-right: none;
-        border-bottom: 2px solid var(--accent); /* Kreska na dole zamiast po prawej */
+        border-bottom: 2px solid var(--accent);
+    }
+
+    /* Zmniejszamy trochę przyciski, żeby menu było bardziej kompaktowe na dotyk */
+    .nav-btn {
+        padding: 12px 15px;
+        font-size: 1.1em;
+        margin-bottom: 5px;
     }
 
     .sidebar-header {
-        font-size: 2em;
-        margin-bottom: 20px;
+        font-size: 1.8em;
+        margin-bottom: 15px;
+    }
+
+    /* Guzik wyloguj traci "margin-top: auto", bo przy height: auto nie ma do czego się dopasować */
+    .sidebar-footer {
+        margin-top: 10px;
+        padding-top: 10px;
     }
 
     .admin-content {
-        padding: 15px; /* Mniej pustego miejsca na małym ekranie */
+        padding: 15px; 
     }
 
     .table-wrapper {
         margin-bottom: 50px;
-        /* WAŻNE: Na telefonach tabele się nie zgniatają. 
-           Musisz dać im overflow-x, żeby użytkownik mógł je przesuwać palcem w lewo/prawo. */
         overflow-x: auto !important; 
     }
 
     .admin-table {
-        min-width: 600px; /* Wymusza szerokość tabeli, co aktywuje przewijanie na telefonie */
+        min-width: 600px; 
     }
 
     .dropdown-content {
-        right: 0; /* Na małych ekranach resetujemy pozycję dropdownów */
+        right: 0; 
     }
 }
 

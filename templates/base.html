@@ -27,5 +27,39 @@
         {% block content %}{% endblock %}
     </div>
     {% block scripts %}{% endblock %}
+    <div style="position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 10000;">
+        <button id="theme-btn" onclick="toggleTheme()" style="background: #5e3bee; color: white; border: none; padding: 12px 20px; border-radius: 50px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+            ☀️ Jasny Motyw
+        </button>
+        
+        {% if request.path != url_for('login_page') and request.path != '/' %}
+            <a href="{{ url_for('logout') }}" style="background: #eb4d4b; color: white; padding: 12px 20px; border-radius: 50px; text-decoration: none; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                Wyloguj się
+            </a>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('theme-btn');
+            body.classList.toggle('dark-mode');
+            
+            if(body.classList.contains('dark-mode')) {
+                btn.innerText = "☀️ Jasny Motyw";
+                localStorage.setItem('theme', 'dark');
+            } else {
+                btn.innerText = "🌙 Ciemny Motyw";
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Przywróć wybrany motyw po odświeżeniu
+        if(localStorage.getItem('theme') === 'dark' || !localStorage.getItem('theme')) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.getElementById('theme-btn').innerText = "🌙 Ciemny Motyw";
+        }
+    </script>
 </body>
 </html>

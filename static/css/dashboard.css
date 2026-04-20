@@ -43,15 +43,19 @@
     color: white;
 }
 
-.btn-logout-sidebar {
-    margin-top: auto;
+.btn-logout, .btn-logout-sidebar {
     background: #eb4d4b;
-    color: white;
-    text-align: center;
-    padding: 15px;
+    display: flex;             /* Flexbox ustawia wszystko idealnie na środku */
+    justify-content: center;
+    align-items: center;
+    min-height: 52px;          /* Minimalna wysokość, żeby zmieścić "g" i "j" */
+    padding: 10px 15px;
     border-radius: 10px;
+    color: white;
     text-decoration: none;
     font-weight: bold;
+    line-height: normal;       /* Resetuje sztywne wysokości z przeglądarki */
+    margin-top: auto;          /* Trzyma przycisk na dole w sidebarze */
 }
 
 /* TREŚĆ PO PRAWEJ */

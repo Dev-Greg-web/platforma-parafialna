@@ -30,14 +30,14 @@ body{
     overflow: hidden;
 }
 
-.login-section{
+.login-section {
     position: absolute;
     left: 50%;
     bottom: -88%;
     transform: translateX(-50%);
     width: calc(100% + 180px);
     padding: 20px 140px;
-    background: #fff;
+    background: var(--login-bg, #fff); /* Użyje zmiennej, a jeśli jej nie ma - bieli */
     border-radius: 290px;
     height: 100%;
     transition: all 0.6s ease;
@@ -245,4 +245,28 @@ form label {
         width: 95%; 
         top: 20px;
     }
+}
+
+body.dark-mode .login-section {
+    --login-bg: #1f2a44; /* Ciemny granat pasujący do reszty */
+}
+body.dark-mode .login-section header,
+body.dark-mode .login-section label,
+body.dark-mode .login-section .separator p {
+    color: #ffffff !important;
+}
+body.dark-mode .login-section input {
+    background: #2a3a5a;
+    color: white;
+    border: 1px solid #5e3bee;
+}
+
+/* --- PRAWDZIWE CIEMNE TŁO CAŁEJ STRONY LOGOWANIA --- */
+body.dark-mode {
+    background: #0f172a !important; /* Głęboki, nowoczesny ciemny kolor całej strony */
+}
+
+/* Dodajemy lekki cień, żeby niebieski panel fajnie odcinał się od ciemnego tła */
+body.dark-mode .container {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
