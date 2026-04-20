@@ -211,24 +211,38 @@ form label {
 /* --- DOPISZ NA KOŃCU PLIKU login.css --- */
 
 /* --- RESPONSIVE DESIGN --- */
+/* --- RESPONSIVE DESIGN --- */
 @media (max-width: 600px) {
     .container {
-        width: 90%; /* Zamiast sztywnych 500px */
+        width: 92%; /* Kontener zajmuje prawie całą szerokość telefonu */
+        height: auto; 
+        min-height: 600px; 
         padding: 20px 15px 120px;
     }
 
     .login-section {
-        width: 150%; /* Zmniejszamy wychodzenie poza kontener z calc(100% + 180px) na bardziej przewidywalne 150% */
-        padding: 20px 30px; /* Zmniejszamy ogromny padding z 140px na 30px */
+        /* MATEMATYKA ZAKRZYWIENIA:
+           Dajemy 100px więcej niż szerokość kontenera (wystaje po 50px z lewej i prawej). */
+        width: calc(100% + 100px); 
+        
+        /* PADDING: 
+           Musimy odzyskać te 50px z lewej/prawej, żeby tekst wszedł z powrotem do widocznej strefy kontenera, 
+           oraz dodać 20px faktycznego odstępu. 50 + 20 = 70px. */
+        padding: 20px 70px; 
     }
 
     .login-section header,
     .signup-section header {
-        font-size: 24px; /* Mniejsze nagłówki */
+        font-size: 24px; 
+    }
+
+    /* Dopasowanie szerokości inputów, żeby nie dotykały krawędzi */
+    .login-section .field-group {
+        width: 100%;
     }
 
     .flash-container {
-        width: 95%; /* Alerty dopasowują się do ekranu */
+        width: 95%; 
         top: 20px;
     }
 }

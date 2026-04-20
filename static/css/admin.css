@@ -221,12 +221,9 @@ h1{
 
 /* --- NAPRAWA UCIĘTEJ TABELI --- */
 body {
-    overflow-y: auto; /* Pozwala na przewijanie całej strony z góry na dół */
     margin: 0;
-    height: 100vh;
-    overflow: hidden !important; /* Blokujemy główny suwak przeglądarki */
+    background-color: var(--bg-dark);
 }
-
 
 .admin-content {
     /* Upewniamy się, że na samym dole zawsze jest trochę pustego miejsca */
@@ -259,6 +256,18 @@ body {
 
 .filter-btn:hover {
     background: rgba(94, 59, 238, 0.3);
+}
+
+.filter-btn.active {
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(94, 59, 238, 0.6);
+}
+
+@media (min-width: 769px) {
+    body {
+        height: 100vh;
+        overflow: hidden !important; 
+    }
 }
 
 .filter-btn.active {

@@ -106,5 +106,28 @@ h1 { color: white; margin-bottom: 30px; }
 
 .no-data { color: #a29bfe; font-style: italic; }
 .container{
-    width: 1200px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .dashboard-wrapper {
+        flex-direction: column; /* Układa sidebar i główną treść jedno pod drugim */
+    }
+
+    .dashboard-sidebar {
+        width: 100%; /* Sidebar zajmuje cały ekran telefonu */
+        padding: 20px;
+        border-right: none;
+        border-bottom: 2px solid #5e3bee;
+    }
+
+    .dashboard-main {
+        padding: 15px; /* Zmniejszamy marginesy na małym ekranie */
+    }
+
+    .attendance-card {
+        max-width: 100%; /* Formularz rozciąga się ładnie na telefonie */
+    }
 }
