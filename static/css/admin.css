@@ -303,3 +303,14 @@ body {
     background: var(--accent);
     box-shadow: 0 0 10px rgba(94, 59, 238, 0.6);
 }
+
+footer {
+    margin-top: 15px;
+    text-align: center;
+}
+
+footer h3 {
+    color: #FFF;
+    font-size: 14px;
+    font-weight: 700;
+}
