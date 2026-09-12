@@ -1487,18 +1487,16 @@ def toggle_uproszczony(id):
 
 # --- ZABEZPIECZENIE SERWOWANIA PLIKU PRZED PATH TRAVERSAL ---
 @app.route('/download/regulamin.pdf')
-@app.route('/download/regulamin-v3.pdf')
 def pobierz_regulamin():
     katalog = os.path.join(app.root_path, 'static', 'docs')
-    filename = 'regulamin-v3.pdf' if os.path.exists(os.path.join(katalog, 'regulamin-v3.pdf')) else 'regulamin.pdf'
-    safe_path = os.path.abspath(os.path.join(katalog, filename))
+    safe_path = os.path.abspath(os.path.join(katalog, 'regulamin.pdf'))
     if not safe_path.startswith(os.path.abspath(katalog)):
         abort(403)
     return send_from_directory(
         katalog, 
-        filename, 
+        'regulamin.pdf', 
         as_attachment=True, 
-        download_name='regulamin-v3.pdf'
+        download_name='regulamin.pdf'
     )
 
 @app.route('/pomoc')
