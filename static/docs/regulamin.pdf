@@ -59,8 +59,8 @@ stream
     pdfuaid:part="1">
     <dc:title>
       <rdf:Alt>
-        <rdf:li xml:lang="x-default">regulamin_rozszerzony-v2.pdf</rdf:li>
-        <rdf:li xml:lang="pl-PL">regulamin_rozszerzony-v2.pdf</rdf:li>
+        <rdf:li xml:lang="x-default">regulamin-v3.pdf</rdf:li>
+        <rdf:li xml:lang="pl-PL">regulamin-v3.pdf</rdf:li>
       </rdf:Alt>
     </dc:title>
     <dc:creator>
