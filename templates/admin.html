@@ -380,36 +380,35 @@
                 <h3 class="text-lg font-black text-white mb-5 flex items-center gap-2">
                     <span class="p-1.5 bg-brand/10 text-brand rounded-lg">➕</span> Dodaj Przydział Stałego Dyżuru
                 </h3>
-                <form action="{{ url_for('add_schedule') }}" method="POST" class="flex flex-col lg:flex-row gap-4 items-stretch lg:items-end">
-                    <div class="flex-grow flex flex-col gap-1.5 min-w-0">
-                        <label class="text-xs font-bold uppercase text-gray-400">Wybierz Ministranta</label>
-                        <select name="user_id" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
-                            <option value="" disabled selected class="bg-[#1e293b] text-gray-400">-- Wybierz z listy --</option>
-                            {% for u in users %}
-                                <option value="{{ u.id }}" class="bg-[#1e293b] text-white">{{ u.imie }} {{ u.nazwisko }} (@{{ u.username }})</option>
-                            {% endfor %}
-                        </select>
+                <form action="{{ url_for('add_schedule') }}" method="POST" onsubmit="return validatePlanMultiSelect()" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+                        <div class="lg:col-span-4 flex flex-col gap-1.5">
+                            <label class="text-xs font-bold uppercase text-gray-400">Dzień Tygodnia</label>
+                            <select name="dzien" id="adminPlanDzien" onchange="updateAdminGodziny()" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
+                                <option value="Poniedziałek" class="bg-[#1e293b] text-white">Poniedziałek</option>
+                                <option value="Wtorek" class="bg-[#1e293b] text-white">Wtorek</option>
+                                <option value="Środa" class="bg-[#1e293b] text-white">Środa</option>
+                                <option value="Czwartek" class="bg-[#1e293b] text-white">Czwartek</option>
+                                <option value="Piątek" class="bg-[#1e293b] text-white">Piątek</option>
+                                <option value="Sobota" class="bg-[#1e293b] text-white">Sobota</option>
+                                <option value="Niedziela" class="bg-[#1e293b] text-white">Niedziela</option>
+                            </select>
+                        </div>
+                        <div class="lg:col-span-3 flex flex-col gap-1.5">
+                            <label class="text-xs font-bold uppercase text-gray-400">Godzina Służby</label>
+                            <select name="godzina" id="adminPlanGodzina" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
+                            </select>
+                        </div>
+                        <div class="lg:col-span-5 flex justify-end">
+                            <button type="submit" class="w-full bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 hover:to-purple-400 text-white font-black py-3.5 px-8 rounded-xl text-sm transition shadow-lg shadow-brand/20 whitespace-nowrap">
+                                ➕ Przypisz do grafiku
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex flex-col gap-1.5 w-full lg:w-56 shrink-0">
-                        <label class="text-xs font-bold uppercase text-gray-400">Dzień Tygodnia</label>
-                        <select name="dzien" id="adminPlanDzien" onchange="updateAdminGodziny()" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
-                            <option value="Poniedziałek" class="bg-[#1e293b] text-white">Poniedziałek</option>
-                            <option value="Wtorek" class="bg-[#1e293b] text-white">Wtorek</option>
-                            <option value="Środa" class="bg-[#1e293b] text-white">Środa</option>
-                            <option value="Czwartek" class="bg-[#1e293b] text-white">Czwartek</option>
-                            <option value="Piątek" class="bg-[#1e293b] text-white">Piątek</option>
-                            <option value="Sobota" class="bg-[#1e293b] text-white">Sobota</option>
-                            <option value="Niedziela" class="bg-[#1e293b] text-white">Niedziela</option>
-                        </select>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold uppercase text-gray-400">Wyszukaj i Wybierz Ministrantów (multi-select po loginie, imieniu, nazwisku):</label>
+                        <div id="adminPlanMultiSelectContainer"></div>
                     </div>
-                    <div class="flex flex-col gap-1.5 w-full lg:w-48 shrink-0">
-                        <label class="text-xs font-bold uppercase text-gray-400">Godzina Służby</label>
-                        <select name="godzina" id="adminPlanGodzina" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
-                        </select>
-                    </div>
-                    <button type="submit" class="w-full lg:w-auto bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 hover:to-purple-400 text-white font-black py-3 px-8 rounded-xl text-sm transition shadow-lg shadow-brand/20 whitespace-nowrap">
-                        ➕ Dodaj dyżur
-                    </button>
                 </form>
             </div>
 
@@ -417,8 +416,16 @@
                 {% for dzien, godziny_grupy in plan.items() %}
                 <div class="glass-card rounded-3xl p-5 border border-white/5 flex flex-col min-w-0 hover:border-brand/30 transition-all duration-300">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-black text-white truncate">{{ dzien }}</h2>
-                        <span class="bg-brand/20 text-brand px-3 py-1 rounded-xl text-xs font-bold shrink-0 ml-2">{{ liczniki[dzien] }} osób</span>
+                        <div class="flex items-center gap-2 min-w-0">
+                            <h2 class="text-xl font-black text-white truncate">{{ dzien }}</h2>
+                            <span class="bg-brand/20 text-brand px-2.5 py-0.5 rounded-xl text-xs font-bold shrink-0">{{ liczniki[dzien] }} osób</span>
+                        </div>
+                        <button type="button" 
+                                onclick="openDayScheduleModal('{{ dzien }}')" 
+                                title="Dodaj ministrantów do dnia: {{ dzien }}"
+                                class="bg-brand/20 hover:bg-brand text-purple-300 hover:text-white px-2.5 py-1.5 rounded-xl font-extrabold text-xs transition duration-200 flex items-center gap-1 shadow-sm shrink-0">
+                            <span>➕</span> <span class="hidden sm:inline">Dodaj</span>
+                        </button>
                     </div>
                     
                     {% if godziny_grupy %}
@@ -529,6 +536,32 @@
                 </div>
             </div>
 
+            <!-- WYSZUKIWARKA KONT Z IKONĄ LUPY -->
+            <div class="mb-6 p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                <div class="relative flex-grow max-w-lg">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input type="text" 
+                           id="userTableSearchInput" 
+                           oninput="filterUserTable(this.value)"
+                           placeholder="Szukaj konta (login, imię lub nazwisko)..." 
+                           class="w-full pl-11 pr-10 py-3 bg-[#1e293b] border border-white/10 rounded-xl text-white text-sm placeholder-gray-400 focus:outline-none focus:border-brand transition shadow-inner">
+                    <button type="button" 
+                            id="clearUserSearchBtn" 
+                            onclick="clearUserSearch()" 
+                            class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-white font-bold text-lg transition"
+                            title="Wyczyść filtr">
+                        &times;
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <span>Liczba kont: <strong id="visibleUsersCount" class="text-white font-bold">{{ users|length }}</strong> z {{ users|length }}</span>
+                </div>
+            </div>
+
             <form id="bulk-user-form" action="{{ url_for('delete_bulk_users') }}" method="POST">
                 <div class="glass-card rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
                     <div class="overflow-x-auto">
@@ -547,9 +580,9 @@
                                     <th class="p-5 text-center">Akcje</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-white/5 text-sm">
+                            <tbody id="usersTableBody" class="divide-y divide-white/5 text-sm">
                                 {% for u in users %}
-                                <tr class="hover:bg-white/5 transition duration-200">
+                                <tr class="user-table-row hover:bg-white/5 transition duration-200" data-username="{{ u.username|lower }}" data-imie="{{ u.imie|lower }}" data-nazwisko="{{ u.nazwisko|lower }}">
                                     <td class="p-5 text-center">
                                         {% if u.username != session.get('username') and u.role != 'admin' %}
                                             <input type="checkbox" name="user_ids" value="{{ u.id }}" onchange="updateUserSelectionCount()" class="user-checkbox w-4 h-4 rounded accent-brand cursor-pointer">
@@ -721,7 +754,8 @@
                                         Zatwierdź
                                     </a>
                                     <a href="{{ url_for('reject_user', user_id=user.id) }}" 
-                                    class="bg-danger/20 hover:bg-danger text-danger hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-danger/30">
+                                    class="bg-danger/20 hover:bg-danger text-danger hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-danger/30"
+                                    onclick="return confirm('Czy na pewno chcesz odrzucić i usunąć konto użytkownika {{ user.username }}?')">
                                         Odrzuć
                                     </a>
                                 </td>
@@ -779,19 +813,15 @@
 
 <!-- MODAL RĘCZNEGO DODAWANIA SŁUŻBY -->
 <div id="addAttendanceModal" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-    <div class="glass-card rounded-3xl p-6 md:p-8 max-w-md w-full border border-white/10 shadow-2xl animate-section">
+    <div class="glass-card rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl animate-section">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-black text-white m-0">Ręczny Wpis Służby</h2>
             <button onclick="closeModal('addAttendanceModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition">&times;</button>
         </div>
-        <form action="{{ url_for('add_attendance_admin') }}" method="POST" class="flex flex-col gap-4">
+        <form action="{{ url_for('add_attendance_admin') }}" method="POST" onsubmit="return validateAttendanceMultiSelect()" class="flex flex-col gap-4">
             <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Wybierz Ministranta:</label>
-                <select name="user_id" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand">
-                    {% for u in users %}
-                        <option value="{{ u.id }}" class="bg-[#1e293b] text-white">{{ u.imie }} {{ u.nazwisko }} (@{{ u.username }})</option>
-                    {% endfor %}
-                </select>
+                <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Wybierz Ministrantów (multi-select po loginie, imieniu, nazwisku):</label>
+                <div id="attendanceMultiSelectContainer"></div>
             </div>
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Data Służby:</label>
@@ -815,9 +845,52 @@
                 <label class="text-xs font-bold text-purple-400 uppercase tracking-wider">Własna nazwa:</label>
                 <input type="text" name="nazwa_inna" id="addInna" placeholder="np. Droga Krzyżowa" class="w-full bg-white/5 border border-brand/40 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand">
             </div>
-            <button type="submit" class="bg-success text-white font-black p-4 rounded-xl text-sm uppercase tracking-wider transition hover:bg-success/90 mt-2">
-                ＋ Wprowadź Rekord do Bazy
-            </button>
+            <div class="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-white/10">
+                <button type="button" onclick="closeModal('addAttendanceModal')" class="px-5 py-3 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
+                    Anuluj
+                </button>
+                <button type="submit" class="bg-success text-white font-black py-3.5 px-6 rounded-xl text-sm uppercase tracking-wider transition hover:bg-success/90 shadow-lg shadow-success/20 flex items-center gap-2">
+                    <span>＋</span> Wprowadź do Bazy
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL DODAWANIA DO GRAFIKU PER DZIEŃ -->
+<div id="dayScheduleModal" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+    <div class="glass-card rounded-3xl p-6 md:p-8 max-w-lg w-full border border-white/10 shadow-2xl animate-section">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-2xl font-black text-white m-0 flex items-center gap-2">
+                    <span>📅</span> <span id="dayScheduleModalTitle">Dodaj do Grafiku</span>
+                </h2>
+                <p class="text-gray-400 text-xs mt-1">Wybierz godzinę i przypisz jednego lub wielu ministrantów naraz.</p>
+            </div>
+            <button type="button" onclick="closeModal('dayScheduleModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition">&times;</button>
+        </div>
+        <form action="{{ url_for('add_schedule') }}" method="POST" onsubmit="return validateDayScheduleMultiSelect()" class="flex flex-col gap-4">
+            <input type="hidden" name="dzien" id="dayScheduleInputDzien">
+            
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Godzina Służby:</label>
+                <select name="godzina" id="dayScheduleSelectGodzina" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand font-mono">
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Ministranci (Wyszukaj i wybierz po loginie, imieniu lub nazwisku):</label>
+                <div id="dayScheduleMultiSelectContainer"></div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-white/10">
+                <button type="button" onclick="closeModal('dayScheduleModal')" class="px-5 py-3 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
+                    Anuluj
+                </button>
+                <button type="submit" class="bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 hover:to-purple-400 text-white font-black py-3.5 px-7 rounded-xl text-sm transition shadow-lg shadow-brand/20 flex items-center gap-2">
+                    <span>➕</span> Zapisz w grafiku
+                </button>
+            </div>
         </form>
     </div>
 </div>
@@ -1269,13 +1342,409 @@
         }, 1000);
     }
 
+    // ==========================================
+    // LISTA MINISTRANTÓW DO WYSZUKIWANIA
+    // ==========================================
+    const ALL_MINISTRANCI = [
+        {% for u in approved_users|default(users) %}
+            {% if u.is_approved %}
+            {
+                id: {{ u.id }},
+                username: {{ u.username|tojson }},
+                imie: {{ u.imie|tojson }},
+                nazwisko: {{ u.nazwisko|tojson }},
+                role: {{ u.role|tojson }}
+            },
+            {% endif %}
+        {% endfor %}
+    ];
+
+    // ==========================================
+    // KOMPONENT AUTOCOMPLETE MULTI-SELECT
+    // ==========================================
+    class MultiUserSelect {
+        constructor({ containerId, inputName = 'user_ids', placeholder = 'Wpisz imię, nazwisko lub login...', users = [] }) {
+            this.container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
+            this.inputName = inputName;
+            this.placeholder = placeholder;
+            this.allUsers = users;
+            this.selectedUsers = [];
+            this.isOpen = false;
+            this.highlightIndex = -1;
+            this.render();
+        }
+
+        render() {
+            if (!this.container) return;
+            this.container.innerHTML = `
+                <div class="multi-select-wrapper flex flex-col gap-2 w-full text-left">
+                    <div class="chips-container flex flex-wrap gap-1.5 min-h-[36px] p-2 bg-black/20 border border-white/10 rounded-xl items-center empty:hidden"></div>
+                    
+                    <div class="relative w-full">
+                        <div class="relative">
+                            <input type="text" 
+                                   autocomplete="off" 
+                                   placeholder="${this.placeholder}" 
+                                   class="search-input w-full bg-[#1e293b] border border-white/10 rounded-xl pl-4 pr-10 py-3 text-white text-sm focus:outline-none focus:border-brand transition shadow-inner">
+                            <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-brand">
+                                🔍
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-menu hidden absolute top-full left-0 right-0 mt-1.5 bg-[#1e293b] border border-white/15 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-[100] divide-y divide-white/5 backdrop-blur-xl"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs text-gray-400 px-1">
+                        <span>Wybrano: <strong class="text-brand font-bold count-badge">0</strong></span>
+                        <button type="button" class="clear-btn text-gray-500 hover:text-red-400 transition hidden">✕ Wyczyść wszystko</button>
+                    </div>
+                </div>
+            `;
+
+            this.chipsContainer = this.container.querySelector('.chips-container');
+            this.input = this.container.querySelector('.search-input');
+            this.dropdown = this.container.querySelector('.dropdown-menu');
+            this.countBadge = this.container.querySelector('.count-badge');
+            this.clearBtn = this.container.querySelector('.clear-btn');
+
+            this.attachEvents();
+        }
+
+        attachEvents() {
+            this.input.addEventListener('focus', () => {
+                this.filterAndShow(this.input.value);
+            });
+
+            this.input.addEventListener('input', () => {
+                this.filterAndShow(this.input.value);
+            });
+
+            this.input.addEventListener('keydown', (e) => {
+                const items = this.dropdown.querySelectorAll('.suggestion-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (items.length > 0) {
+                        this.highlightIndex = (this.highlightIndex + 1) % items.length;
+                        this.updateHighlight(items);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (items.length > 0) {
+                        this.highlightIndex = (this.highlightIndex - 1 + items.length) % items.length;
+                        this.updateHighlight(items);
+                    }
+                } else if (e.key === 'Enter') {
+                    if (this.highlightIndex >= 0 && items[this.highlightIndex]) {
+                        e.preventDefault();
+                        items[this.highlightIndex].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    this.hideDropdown();
+                }
+            });
+
+            this.clearBtn.addEventListener('click', () => {
+                this.reset();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!this.container.contains(e.target)) {
+                    this.hideDropdown();
+                }
+            });
+        }
+
+        filterAndShow(query) {
+            const q = (query || '').trim().toLowerCase();
+            const selectedIds = new Set(this.selectedUsers.map(u => u.id));
+            
+            const matches = this.allUsers.filter(u => {
+                if (selectedIds.has(u.id)) return false;
+                if (!q) return true;
+                return (u.username && u.username.toLowerCase().includes(q)) ||
+                       (u.imie && u.imie.toLowerCase().includes(q)) ||
+                       (u.nazwisko && u.nazwisko.toLowerCase().includes(q));
+            });
+
+            this.highlightIndex = -1;
+            this.dropdown.innerHTML = '';
+
+            if (matches.length === 0) {
+                this.dropdown.innerHTML = `
+                    <div class="p-4 text-center text-xs text-gray-400 italic">
+                        ${q ? 'Brak pasujących ministrantów' : 'Wszyscy ministranci zostali już wybrani'}
+                    </div>
+                `;
+                this.showDropdown();
+                return;
+            }
+
+            if (matches.length > 1 && q) {
+                const selectAllDiv = document.createElement('div');
+                selectAllDiv.className = 'p-2.5 bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold cursor-pointer transition flex items-center justify-between';
+                selectAllDiv.innerHTML = `<span>✨ Wybierz wszystkich znalezionych</span> <span class="bg-brand text-white px-2 py-0.5 rounded-full text-[10px]">${matches.length}</span>`;
+                selectAllDiv.addEventListener('click', () => {
+                    matches.forEach(u => this.addUser(u));
+                    this.input.value = '';
+                    this.hideDropdown();
+                    this.input.focus();
+                });
+                this.dropdown.appendChild(selectAllDiv);
+            }
+
+            matches.slice(0, 30).forEach((u, idx) => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item p-3 hover:bg-white/10 cursor-pointer transition flex items-center justify-between text-sm';
+                item.dataset.index = idx;
+                item.innerHTML = `
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="p-1.5 bg-white/5 rounded-lg text-sm">👦</span>
+                        <div class="flex flex-col min-w-0">
+                            <span class="font-bold text-white text-xs truncate">${u.imie} ${u.nazwisko}</span>
+                            <span class="text-[11px] font-mono text-brand truncate">@${u.username}</span>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gray-400 hover:text-white font-bold ml-2 shrink-0">+ Wybierz</span>
+                `;
+                item.addEventListener('click', () => {
+                    this.addUser(u);
+                    this.input.value = '';
+                    this.hideDropdown();
+                    this.input.focus();
+                });
+                this.dropdown.appendChild(item);
+            });
+
+            this.showDropdown();
+        }
+
+        updateHighlight(items) {
+            items.forEach((item, i) => {
+                if (i === this.highlightIndex) {
+                    item.classList.add('bg-white/15');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('bg-white/15');
+                }
+            });
+        }
+
+        showDropdown() {
+            this.dropdown.classList.remove('hidden');
+            this.isOpen = true;
+        }
+
+        hideDropdown() {
+            this.dropdown.classList.add('hidden');
+            this.isOpen = false;
+            this.highlightIndex = -1;
+        }
+
+        addUser(user) {
+            if (this.selectedUsers.some(u => u.id === user.id)) return;
+            this.selectedUsers.push(user);
+            this.updateChips();
+        }
+
+        removeUser(userId) {
+            this.selectedUsers = this.selectedUsers.filter(u => u.id !== userId);
+            this.updateChips();
+        }
+
+        reset() {
+            this.selectedUsers = [];
+            this.input.value = '';
+            this.updateChips();
+            this.hideDropdown();
+        }
+
+        updateChips() {
+            this.chipsContainer.innerHTML = '';
+            if (this.selectedUsers.length === 0) {
+                this.chipsContainer.classList.add('hidden');
+                this.clearBtn.classList.add('hidden');
+                this.countBadge.textContent = '0';
+                return;
+            }
+
+            this.chipsContainer.classList.remove('hidden');
+            this.clearBtn.classList.remove('hidden');
+            this.countBadge.textContent = this.selectedUsers.length;
+
+            this.selectedUsers.forEach(u => {
+                const chip = document.createElement('div');
+                chip.className = 'inline-flex items-center gap-1.5 bg-brand/20 border border-brand/40 text-white text-xs px-3 py-1.5 rounded-xl font-medium shadow-sm';
+                chip.innerHTML = `
+                    <span>${u.imie} ${u.nazwisko}</span>
+                    <span class="text-[10px] text-purple-300 font-mono">(@${u.username})</span>
+                    <input type="hidden" name="${this.inputName}" value="${u.id}">
+                    <button type="button" class="ml-1 text-gray-400 hover:text-red-400 font-bold text-sm leading-none transition">&times;</button>
+                `;
+                chip.querySelector('button').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.removeUser(u.id);
+                });
+                this.chipsContainer.appendChild(chip);
+            });
+        }
+
+        getSelectedCount() {
+            return this.selectedUsers.length;
+        }
+    }
+
+    // Instancje komponentu multi-select
+    let dayScheduleSelectInstance = null;
+    let adminPlanSelectInstance = null;
+    let attendanceSelectInstance = null;
+
+    function openDayScheduleModal(dzien) {
+        document.getElementById('dayScheduleModalTitle').textContent = `Dzień: ${dzien}`;
+        document.getElementById('dayScheduleInputDzien').value = dzien;
+        
+        const godzinaSelect = document.getElementById('dayScheduleSelectGodzina');
+        godzinaSelect.innerHTML = '';
+        const godziny = godzinyPlanAdmin[dzien] || [];
+        godziny.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g;
+            opt.textContent = g;
+            opt.className = "bg-[#1e293b] text-white";
+            godzinaSelect.appendChild(opt);
+        });
+
+        if (dayScheduleSelectInstance) {
+            dayScheduleSelectInstance.reset();
+        }
+
+        openModal('dayScheduleModal');
+    }
+
+    function validateDayScheduleMultiSelect() {
+        if (!dayScheduleSelectInstance || dayScheduleSelectInstance.getSelectedCount() === 0) {
+            alert("Proszę wybrać co najmniej jednego ministranta!");
+            return false;
+        }
+        return true;
+    }
+
+    function validatePlanMultiSelect() {
+        if (!adminPlanSelectInstance || adminPlanSelectInstance.getSelectedCount() === 0) {
+            alert("Proszę wybrać co najmniej jednego ministranta!");
+            return false;
+        }
+        return true;
+    }
+
+    function validateAttendanceMultiSelect() {
+        if (!attendanceSelectInstance || attendanceSelectInstance.getSelectedCount() === 0) {
+            alert("Proszę wybrać co najmniej jednego ministranta!");
+            return false;
+        }
+        return true;
+    }
+
+    // ==========================================
+    // WYSZUKIWARKA W REJESTRZE KONT
+    // ==========================================
+    function filterUserTable(query) {
+        const q = (query || '').trim().toLowerCase();
+        const rows = document.querySelectorAll('.user-table-row');
+        const clearBtn = document.getElementById('clearUserSearchBtn');
+        const countEl = document.getElementById('visibleUsersCount');
+        let visibleCount = 0;
+
+        if (clearBtn) {
+            if (q) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        }
+
+        rows.forEach(row => {
+            const username = (row.dataset.username || '').toLowerCase();
+            const imie = (row.dataset.imie || '').toLowerCase();
+            const nazwisko = (row.dataset.nazwisko || '').toLowerCase();
+            
+            const matches = !q || username.includes(q) || imie.includes(q) || nazwisko.includes(q);
+            if (matches) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (countEl) {
+            countEl.textContent = visibleCount;
+        }
+
+        let noResultsRow = document.getElementById('noUserResultsRow');
+        const tbody = document.getElementById('usersTableBody');
+        if (visibleCount === 0 && q) {
+            if (!noResultsRow && tbody) {
+                noResultsRow = document.createElement('tr');
+                noResultsRow.id = 'noUserResultsRow';
+                tbody.appendChild(noResultsRow);
+            }
+            if (noResultsRow) {
+                noResultsRow.style.display = '';
+                noResultsRow.innerHTML = `
+                    <td colspan="8" class="p-8 text-center text-gray-400 font-medium">
+                        🔍 Nie znaleziono żadnego konta pasującego do frazy: "<strong class="text-white">${query}</strong>"
+                    </td>
+                `;
+            }
+        } else if (noResultsRow) {
+            noResultsRow.style.display = 'none';
+        }
+    }
+
+    function clearUserSearch() {
+        const input = document.getElementById('userTableSearchInput');
+        if (input) {
+            input.value = '';
+            filterUserTable('');
+            input.focus();
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         startLiveClock();
         
+        // Inicjalizacja instancji MultiUserSelect
+        dayScheduleSelectInstance = new MultiUserSelect({
+            containerId: 'dayScheduleMultiSelectContainer',
+            inputName: 'user_ids',
+            placeholder: 'Szukaj ministranta (login, imię, nazwisko)...',
+            users: ALL_MINISTRANCI
+        });
+
+        adminPlanSelectInstance = new MultiUserSelect({
+            containerId: 'adminPlanMultiSelectContainer',
+            inputName: 'user_ids',
+            placeholder: 'Szukaj ministranta (login, imię, nazwisko)...',
+            users: ALL_MINISTRANCI
+        });
+
+        attendanceSelectInstance = new MultiUserSelect({
+            containerId: 'attendanceMultiSelectContainer',
+            inputName: 'user_ids',
+            placeholder: 'Szukaj ministranta (login, imię, nazwisko)...',
+            users: ALL_MINISTRANCI
+        });
+
         // Automatyczne załadowanie początkowych godzin przy otwarciu strony
         updateAdminGodziny();
         
-        const savedTab = localStorage.getItem('activeAdminTab') || 'dashboard';
+        // Obsługa aktywnej zakładki (w tym obsługa kotwicy #weryfikacja)
+        const hashTab = window.location.hash ? window.location.hash.substring(1) : null;
+        const validTabs = ['dashboard', 'uzytkownicy', 'sluzby', 'ranking', 'plan', 'ogloszenia', 'weryfikacja'];
+        const savedTab = (hashTab && validTabs.includes(hashTab)) 
+            ? hashTab 
+            : (localStorage.getItem('activeAdminTab') || 'dashboard');
+            
         showSection(savedTab);
         aktualizujPodsumowanie();
         

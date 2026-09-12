@@ -528,10 +528,9 @@ def two_factor_page():
 @app.route('/admin/weryfikacja')
 @admin_required
 def panel_weryfikacji():
-    oczekujacy = Users.query.filter_by(is_approved=False).order_by(Users.id.desc()).all()
-    return render_template('admin_weryfikacja.html', uzytkownicy=oczekujacy)
+    return redirect(url_for('admin_page') + '#weryfikacja')
 
-@app.route('/admin/weryfikacja/<int:user_id>/<string:akcja>', methods=['POST'])
+@app.route('/admin/weryfikacja/<int:user_id>/<string:akcja>', methods=['GET', 'POST'])
 @admin_required
 def przetworz_weryfikacje(user_id, akcja):
     uzytkownik = Users.query.get_or_404(user_id)
@@ -541,13 +540,14 @@ def przetworz_weryfikacje(user_id, akcja):
         db.session.commit()
         flash(f"Konto użytkownika {uzytkownik.username} zostało zatwierdzone.", "success")
     elif akcja == 'odrzuc':
+        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
         Attendance.query.filter_by(user_id=user_id).delete()
         Schedule.query.filter_by(user_id=user_id).delete()
         db.session.delete(uzytkownik)
         db.session.commit()
         flash(f"Rejestracja użytkownika {uzytkownik.username} została odrzucona.", "warning")
         
-    return redirect(url_for('panel_weryfikacji'))
+    return redirect(request.referrer or (url_for('admin_page') + '#weryfikacja'))
 
 @app.route('/reset-admin-password', methods=['POST'])
 def reset_admin_password():
@@ -709,21 +709,26 @@ def add_attendance():
 
     return redirect(url_for('dashboard_page'))
 
-# --- ZMIANA NA POST DLA BEZPIECZEŃSTWA (Zabezpieczenie przed atakami CSRF) ---
-@app.route('/admin/delete_user/<int:id>', methods=['POST'])
+# --- BEZPIECZNE USUWANIE UŻYTKOWNIKA I CZYSZCZENIE KLUCZY OBCYCH ---
+@app.route('/admin/delete_user/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def delete_user(id):
     user_to_del = Users.query.get_or_404(id)
     if user_to_del.role == 'admin':
         flash("Nie można usunąć głównego konta Administratora!", "danger")
-        return redirect(url_for('admin_page'))
+        return redirect(request.referrer or url_for('admin_page'))
         
-    Attendance.query.filter_by(user_id=id).delete()
-    Schedule.query.filter_by(user_id=id).delete()
-    db.session.delete(user_to_del)
-    db.session.commit()
-    flash(f"Użytkownik {user_to_del.username} został trwale usunięty.", "success")
-    return redirect(url_for('admin_page'))
+    try:
+        PasswordResetRequest.query.filter_by(user_id=id).delete()
+        Attendance.query.filter_by(user_id=id).delete()
+        Schedule.query.filter_by(user_id=id).delete()
+        db.session.delete(user_to_del)
+        db.session.commit()
+        flash(f"Użytkownik {user_to_del.username} został trwale usunięty.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Błąd podczas usuwania użytkownika: {e}", "danger")
+    return redirect(request.referrer or url_for('admin_page'))
 
 @app.route('/edit_user/<int:user_id>', methods=['POST'])
 @admin_required
@@ -749,7 +754,7 @@ def edit_user(user_id):
     flash(f"Pomyślnie zaktualizowano dane użytkownika {user.username}!", "success")
     return redirect(url_for('admin_page'))
 
-@app.route('/admin/delete/<int:id>', methods=['POST'])
+@app.route('/admin/delete/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def delete_attendance(id):
     entry = Attendance.query.get_or_404(id)
@@ -760,7 +765,7 @@ def delete_attendance(id):
     except Exception:
         db.session.rollback()
         flash("Coś poszło nie tak przy usuwaniu wpisu.", "danger")
-    return redirect(url_for('admin_page'))
+    return redirect(request.referrer or url_for('admin_page'))
 
 @app.route('/admin/edit/<int:id>', methods=['POST'])
 @app.route('/edit_attendance/<int:id>', methods=['POST'])
@@ -782,29 +787,47 @@ def edit_entry(id):
 @app.route('/admin/add_attendance_admin', methods=['POST'])
 @admin_required
 def add_attendance_admin():
-    user_id = request.form.get("user_id")
+    raw_user_ids = request.form.getlist("user_ids")
+    single_id = request.form.get("user_id")
+    if not raw_user_ids and single_id:
+        raw_user_ids = [single_id]
+        
+    all_user_ids = []
+    for uid in raw_user_ids:
+        for part in str(uid).split(','):
+            part = part.strip()
+            if part.isdigit():
+                all_user_ids.append(int(part))
+                
     data_str = request.form.get("data_sluzby")
     typ_mszy = request.form.get("typ_mszy")
     nazwa_inna = request.form.get("nazwa_inna")
     godzina = request.form.get("godzina")
 
+    if not all_user_ids or not data_str or not godzina or not typ_mszy:
+        flash("Wypełnij wymagane pola (wybierz co najmniej jednego ministranta, datę i godzinę)!", "warning")
+        return redirect(request.referrer or url_for('admin_page'))
+
     try:
         wybrana_data = date.fromisoformat(data_str)
-        nowa_sluzba = Attendance(
-            user_id=user_id, 
-            data_sluzby=wybrana_data, 
-            typ_mszy=typ_mszy,
-            nazwa_inna=nazwa_inna if typ_mszy == 'inna' else None, 
-            godzina=godzina
-        )
-        db.session.add(nowa_sluzba)
+        added_count = 0
+        for uid in all_user_ids:
+            nowa_sluzba = Attendance(
+                user_id=uid, 
+                data_sluzby=wybrana_data, 
+                typ_mszy=typ_mszy,
+                nazwa_inna=nazwa_inna if typ_mszy == 'inna' else None, 
+                godzina=godzina
+            )
+            db.session.add(nowa_sluzba)
+            added_count += 1
         db.session.commit()
-        flash("Służba dodana pomyślnie przez Administratora.", "success")
-    except Exception:
+        flash(f"Pomyślnie dodano {added_count} wpis(ów) służby.", "success")
+    except Exception as e:
         db.session.rollback()
-        flash("Coś poszło nie tak przy dodawaniu służby.", "danger")
+        flash(f"Coś poszło nie tak przy dodawaniu służby: {e}", "danger")
 
-    return redirect(url_for('admin_page'))
+    return redirect(request.referrer or url_for('admin_page'))
 
 @app.route('/admin/add_announcement', methods=['POST'])
 @staff_required
@@ -828,42 +851,69 @@ def edit_announcement(id):
     flash("Ogłoszenie zaktualizowane.", "success")
     return redirect(url_for('admin_page'))
 
-@app.route('/admin/delete_announcement/<int:id>', methods=['POST'])
+@app.route('/admin/delete_announcement/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def delete_announcement(id):
     ogloszenie = Announcement.query.get_or_404(id)
     db.session.delete(ogloszenie)
     db.session.commit()
     flash("Ogłoszenie usunięte.", "warning")
-    return redirect(url_for('admin_page'))
+    return redirect(request.referrer or url_for('admin_page'))
 
 @app.route('/admin/add_schedule', methods=['POST'])
 @staff_required
 def add_schedule():
-    user_id = request.form.get('user_id')
+    raw_user_ids = request.form.getlist('user_ids')
+    single_id = request.form.get('user_id')
+    if not raw_user_ids and single_id:
+        raw_user_ids = [single_id]
+        
+    all_user_ids = []
+    for uid in raw_user_ids:
+        for part in str(uid).split(','):
+            part = part.strip()
+            if part.isdigit():
+                all_user_ids.append(int(part))
+                
     dzien = request.form.get('dzien')
     godzina = request.form.get('godzina')
     
-    if not user_id or not dzien or not godzina:
-        flash("Nie udało się zapisać. Wypełnij wszystkie pola formularza!", "warning")
-        return redirect(url_for('admin_page'))
+    if not all_user_ids or not dzien or not godzina:
+        flash("Nie udało się zapisać. Wybierz co najmniej jednego ministranta oraz dzień i godzinę!", "warning")
+        fallback = url_for('ksDash') if session.get('user_role') == 'ksiądz' else url_for('admin_page')
+        return redirect(request.referrer or fallback)
         
     try:
-        nowy_dyzur = Schedule(
-            user_id=int(user_id),
-            dzien_tygodnia=dzien,
-            godzina=godzina
-        )
-        db.session.add(nowy_dyzur)
+        added_count = 0
+        already_assigned = 0
+        for uid in all_user_ids:
+            existing = Schedule.query.filter_by(user_id=uid, dzien_tygodnia=dzien, godzina=godzina).first()
+            if not existing:
+                nowy_dyzur = Schedule(
+                    user_id=uid,
+                    dzien_tygodnia=dzien,
+                    godzina=godzina
+                )
+                db.session.add(nowy_dyzur)
+                added_count += 1
+            else:
+                already_assigned += 1
         db.session.commit()
-        flash("Służba dodana pomyślnie przez Administratora.", "success")
-    except Exception:
+        if added_count > 0:
+            msg = f"Pomyślnie dodano {added_count} ministrant(ów) do grafiku ({dzien}, {godzina})."
+            if already_assigned > 0:
+                msg += f" ({already_assigned} osób było już przypisanych)."
+            flash(msg, "success")
+        else:
+            flash("Wszyscy wybrani ministranci są już przypisani do tej godziny w grafiku!", "info")
+    except Exception as e:
         db.session.rollback()
-        flash("Coś poszło nie tak przy dodawaniu służby.", "danger")
+        flash(f"Coś poszło nie tak przy dodawaniu służby: {e}", "danger")
         
-    return redirect(url_for('admin_page'))
+    fallback = url_for('ksDash') if session.get('user_role') == 'ksiądz' else url_for('admin_page')
+    return redirect(request.referrer or fallback)
 
-@app.route('/admin/delete_schedule/<int:id>', methods=['POST'])
+@app.route('/admin/delete_schedule/<int:id>', methods=['GET', 'POST'])
 @staff_required
 def delete_schedule(id):
     dyzur = db.session.get(Schedule, id)
@@ -875,8 +925,11 @@ def delete_schedule(id):
         except Exception:
             db.session.rollback()
             flash("Błąd podczas usuwania służby.", "danger")
+    else:
+        flash("Nie znaleziono takiego wpisu w grafiku.", "warning")
             
-    return redirect(url_for('admin_page'))
+    fallback = url_for('ksDash') if session.get('user_role') == 'ksiądz' else url_for('admin_page')
+    return redirect(request.referrer or fallback)
 
 @app.route('/admin')
 @admin_required
@@ -923,12 +976,14 @@ def admin_page():
 
     unapproved_users = Users.query.filter_by(is_approved=False).all()
     unapproved_count = len(unapproved_users)
+    approved_users = Users.query.filter_by(is_approved=True).order_by(Users.nazwisko, Users.imie).all()
     all_users = Users.query.order_by(Users.created_at.desc()).all()
     
     return render_template(
         "admin.html", 
         attendances=all_attendance, 
         users=all_users, 
+        approved_users=approved_users,
         pending_users=pending_users,
         announcements=all_announcements, 
         stats=user_stats, 
@@ -956,27 +1011,34 @@ def admin_change_password_inline(user_id):
         
     return redirect(url_for('admin_page'))
 
-@app.route('/admin/approve_user/<int:user_id>', methods=['POST'])
+@app.route('/admin/approve_user/<int:user_id>', methods=['GET', 'POST'])
 @admin_required
 def approve_user(user_id):
     user = Users.query.get_or_404(user_id)
     user.is_approved = True
     db.session.commit()
-    flash(f'Konto użytkownika {user.username} zostało zatwierdzone!', 'success')
-    return redirect(url_for('admin_page'))
+    flash(f'Konto użytkownika {user.username} ({user.imie} {user.nazwisko}) zostało pomyślnie zatwierdzone!', 'success')
+    return redirect(request.referrer or url_for('admin_page'))
 
-@app.route('/admin/reject_user/<int:user_id>', methods=['POST'])
+@app.route('/admin/reject_user/<int:user_id>', methods=['GET', 'POST'])
 @admin_required
 def reject_user(user_id):
     user = Users.query.get_or_404(user_id)
-    Attendance.query.filter_by(user_id=user_id).delete()
-    Schedule.query.filter_by(user_id=user_id).delete()
-    db.session.delete(user)
-    db.session.commit()
-    flash(f'Konto użytkownika {user.username} zostało odrzucone i usunięte.', 'warning')
-    return redirect(url_for('admin_page'))
+    uname = user.username
+    full_name = f"{user.imie} {user.nazwisko}"
+    try:
+        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
+        Attendance.query.filter_by(user_id=user_id).delete()
+        Schedule.query.filter_by(user_id=user_id).delete()
+        db.session.delete(user)
+        db.session.commit()
+        flash(f'Konto użytkownika {uname} ({full_name}) zostało odrzucone i usunięte.', 'warning')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Błąd podczas odrzucania konta: {e}', 'danger')
+    return redirect(request.referrer or url_for('admin_page'))
 
-@app.route('/admin/verify_action/<int:user_id>/<string:akcja>', methods=['POST'])
+@app.route('/admin/verify_action/<int:user_id>/<string:akcja>', methods=['GET', 'POST'])
 @admin_required
 def verify_action(user_id, akcja):
     u = Users.query.get_or_404(user_id)
@@ -984,12 +1046,13 @@ def verify_action(user_id, akcja):
         u.is_approved = True
         flash(f"Użytkownik {u.username} zatwierdzony!", "success")
     else:
+        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
         Attendance.query.filter_by(user_id=user_id).delete()
         Schedule.query.filter_by(user_id=user_id).delete()
         db.session.delete(u)
         flash(f"Odrzucono rejestrację {u.username}.", "danger")
     db.session.commit()
-    return redirect(url_for('admin_page'))
+    return redirect(request.referrer or url_for('admin_page'))
 
 @app.route('/admin/delete_bulk_users', methods=['POST'])
 @admin_required
@@ -1000,8 +1063,9 @@ def delete_bulk_users():
         current_username = session.get('username')
         try:
             for uid in user_ids:
-                user_to_del = db.session.get(Users, int(uid)) if uid.isdigit() else Users.query.get(uid)
+                user_to_del = db.session.get(Users, int(uid)) if str(uid).isdigit() else db.session.get(Users, uid)
                 if user_to_del and user_to_del.role != 'admin' and user_to_del.username != current_username:
+                    PasswordResetRequest.query.filter_by(user_id=user_to_del.id).delete()
                     Attendance.query.filter_by(user_id=user_to_del.id).delete()
                     Schedule.query.filter_by(user_id=user_to_del.id).delete()
                     db.session.delete(user_to_del)
@@ -1017,7 +1081,7 @@ def delete_bulk_users():
             flash("Wystąpił błąd podczas usuwania wybranych użytkowników.", "danger")
     else:
         flash("Proszę zaznaczyć użytkowników do usunięcia.", "warning")
-    return redirect(url_for('admin_page'))
+    return redirect(request.referrer or url_for('admin_page'))
 
 @app.route('/admin/delete_bulk_attendances', methods=['POST'])
 @admin_required
@@ -1027,7 +1091,7 @@ def delete_bulk_attendances():
         deleted_count = 0
         try:
             for aid in att_ids:
-                entry = db.session.get(Attendance, int(aid)) if aid.isdigit() else Attendance.query.get(aid)
+                entry = db.session.get(Attendance, int(aid)) if str(aid).isdigit() else db.session.get(Attendance, aid)
                 if entry:
                     db.session.delete(entry)
                     deleted_count += 1
@@ -1178,13 +1242,13 @@ def dashboard_page():
         return render_template('dash_uproszczony.html', user=aktualny_uzytkownik.username, announcements=announcements, attendances=attendances)
     return render_template('dashboard.html', user=aktualny_uzytkownik.username, announcements=announcements, attendances=attendances, moje_dyzury=moje_dyzury, plan=plan_tygodnia, liczniki=plan_liczniki)
 
-@app.route('/delete_my_attendance/<int:id>', methods=['POST'])
+@app.route('/delete_my_attendance/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_my_attendance(id):
     entry = Attendance.query.get_or_404(id)
     if entry.user_id != session['user_id']:
         flash("Brak uprawnień. Nie można usunąć cudzego wpisu.", "danger")
-        return redirect(url_for('dashboard_page'))
+        return redirect(request.referrer or url_for('dashboard_page'))
     try:
         db.session.delete(entry)
         db.session.commit()
@@ -1192,7 +1256,7 @@ def delete_my_attendance(id):
     except Exception:
         db.session.rollback()
         flash("Coś poszło nie tak przy usuwaniu służby.", "danger")
-    return redirect(url_for('dashboard_page'))
+    return redirect(request.referrer or url_for('dashboard_page'))
 
 @app.route('/edit_my_attendance/<int:id>', methods=['POST'])
 @login_required
@@ -1412,14 +1476,14 @@ def export_schedule():
     nazwa_pliku = f"Plan_Sluzb_{date.today().strftime('%Y-%m-%d')}.xlsx"
     return send_file(output, download_name=nazwa_pliku, as_attachment=True)
 
-@app.route('/admin/toggle_uproszczony/<int:id>', methods=['POST'])
+@app.route('/admin/toggle_uproszczony/<int:id>', methods=['GET', 'POST'])
 @admin_required
 def toggle_uproszczony(id):
     u = Users.query.get_or_404(id)
     u.uproszczony = not u.uproszczony
     db.session.commit()
     flash(f"Zmieniono tryb wyświetlania dla użytkownika {u.username}.", "success")
-    return redirect(url_for('admin_page'))
+    return redirect(request.referrer or url_for('admin_page'))
 
 # --- ZABEZPIECZENIE SERWOWANIA PLIKU PRZED PATH TRAVERSAL ---
 @app.route('/download/regulamin.pdf')
