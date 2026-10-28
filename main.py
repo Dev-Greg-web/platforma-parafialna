@@ -63,6 +63,9 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session or session.get('user_role') != 'admin':
+            if session.get('has_admin_rank'):
+                flash("Aby wejść do Panelu Admina, zaloguj się na Konto Admina (wymaga GPS i kodu z Telegrama).", "warning")
+                return redirect(url_for('login_page', mode='admin'))
             flash("Brak wymaganych uprawnień administratora!", "danger")
             return redirect(url_for('login_page'))
         return f(*args, **kwargs)
@@ -204,6 +207,23 @@ def send_telegram_alert(tresc):
     except Exception as e:
         print(f"Błąd powiadomienia Telegram: {e}")
 
+def verify_user_password(user, password, env_admin_name=None, env_admin_pass=None):
+    if not user or not password:
+        return False
+    if env_admin_name and env_admin_pass and user.username == env_admin_name and password == env_admin_pass:
+        return True
+    if not user.password:
+        return False
+    if user.password == password:
+        return True
+    if user.password.startswith(('pbkdf2:', 'scrypt:')):
+        try:
+            if check_password_hash(user.password, password):
+                return True
+        except Exception:
+            pass
+    return False
+
 @app.route('/telegram-webhook', methods=['POST'])
 def telegram_webhook():
     update = request.get_json()
@@ -219,19 +239,20 @@ def telegram_webhook():
     if chat_id != str(allowed_chat_id):
         return "OK", 200
 
-    env_admin_name = os.getenv("admin_name") or os.getenv("ADMIN_NAME") or "AdminGreg"
-    admin = Users.query.filter_by(username=env_admin_name).first()
-
-    if not admin:
-        return "OK", 200
-
-    # Szukamy aktywnej (PENDING) prośby z ostatnich 5 minut
+    # Szukamy aktywnej (PENDING) prośby z ostatnich 5 minut (dla dowolnego admina)
     piec_minut_temu = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=5)
     pending_request = PasswordResetRequest.query.filter(
-        PasswordResetRequest.user_id == admin.id,
         PasswordResetRequest.status == 'PENDING',
         PasswordResetRequest.created_at >= piec_minut_temu
     ).order_by(PasswordResetRequest.created_at.desc()).first()
+
+    admin = db.session.get(Users, pending_request.user_id) if pending_request else None
+    if not admin:
+        env_admin_name = os.getenv("admin_name") or os.getenv("ADMIN_NAME") or "AdminGreg"
+        admin = Users.query.filter_by(username=env_admin_name).first()
+
+    if not admin:
+        return "OK", 200
 
     # Normalizacja tekstu do małych liter dla łatwiejszego porównywania
     text_clean = text.lower().strip()
@@ -252,7 +273,7 @@ def telegram_webhook():
         pending_request.status = 'APPROVED'
         db.session.commit()
 
-        send_telegram_alert("✅ *SUKCES!* Hasło zostało pomyślnie zmienione w bazie danych na Twoje własne!\n\n💡 *Pamiętaj:* Stare hasło z pliku `.env` nadal działa jako klucz zapasowy.")
+        send_telegram_alert(f"✅ *SUKCES!* Hasło dla konta `{admin.username}` zostało pomyślnie zmienione w bazie danych na Twoje własne!\n\n💡 *Pamiętaj:* Stare hasło z pliku `.env` nadal działa jako klucz zapasowy dla głównego konta.")
 
     # 2. Samo "ustaw hasło" / "/ustaw_haslo" (poinstruowanie użytkownika)
     elif text_clean in ["ustaw hasło", "ustaw haslo", "ustaw_haslo", "/ustaw_haslo"]:
@@ -274,9 +295,12 @@ def telegram_webhook():
 
 @app.route('/')
 def login_page():
+    requested_mode = (request.args.get('mode') or '').strip().lower()
     if 'user_id' in session:
         if session.get('user_role') == 'admin':
             return redirect(url_for('admin_page'))
+        if requested_mode == 'admin':
+            return render_template('login.html')
         elif session.get('user_role') == 'ksiądz':
             return redirect(url_for('ksDash'))
         return redirect(url_for('dashboard_page'))
@@ -287,13 +311,15 @@ def auth_process():
     action = request.form.get("action")
     username = (request.form.get("username") or "").strip()
     password = request.form.get("haslo") or request.form.get("password")
+    login_mode = (request.form.get("login_mode") or "normal").strip().lower()
+    redirect_kwargs = {'mode': 'admin'} if login_mode == 'admin' else {}
     
     env_admin_name = os.getenv("ADMIN_NAME") or os.getenv("admin_name") or "AdminGreg"
     env_admin_pass = os.getenv("ADMIN_PASSWORD") or os.getenv("admin_password") or "Lego2012"
 
     if not password or not username:
         flash("Proszę podać login oraz hasło.", "warning")
-        return redirect(url_for('login_page'))
+        return redirect(url_for('login_page', **redirect_kwargs))
 
     if request.headers.getlist("X-Forwarded-For"):
         user_ip = request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
@@ -312,9 +338,14 @@ def auth_process():
 
     browser_lat = request.form.get("geo_lat")
     browser_lng = request.form.get("geo_lng")
-    has_gps = browser_lat and browser_lng and browser_lat.strip() != "" and browser_lng.strip() != ""
+    has_gps = bool(browser_lat and browser_lng and browser_lat.strip() != "" and browser_lng.strip() != "")
 
     if action == "login":
+        if not request.form.get('regulamin'):
+            flash('Musisz zaakceptować regulamin, aby się zalogować!', 'danger')
+            return redirect(url_for('login_page', **redirect_kwargs))
+
+        # Upewniamy się, że główny administrator z .env zawsze posiada swoje konto w bazie Users
         if username == env_admin_name:
             admin_in_db = Users.query.filter_by(username=username).first()
             if not admin_in_db:
@@ -331,83 +362,88 @@ def auth_process():
                 db.session.add(admin_in_db)
                 db.session.commit()
 
-            # OTO ZMIANA: Hasło jest poprawne jeśli pasuje do .env ORAZ/LUB do bazy danych!
-            is_env_pass_valid = (password == env_admin_pass)
-            is_db_pass_valid = check_password_hash(admin_in_db.password, password)
+        user = Users.query.filter_by(username=username).first()
+        is_pass_valid = verify_user_password(user, password, env_admin_name, env_admin_pass)
 
-            is_pass_valid = is_env_pass_valid or is_db_pass_valid
+        # Wariant 1: Logowanie na KONTO ADMINA (wymaga rangi admin, akceptacji GPS oraz kodu 2FA z Telegrama)
+        if login_mode == "admin":
+            if not user or not is_pass_valid:
+                flash("Podane dane logowania administratora są nieprawidłowe.", "danger")
+                return redirect(url_for('login_page', mode='admin'))
 
-            if is_pass_valid:
-                if not has_gps:
-                    alert_text = (
-                        f"⛔ ODRZUCENO PROBĘ LOGOWANIA ADMINA (BRAK GPS)!\n\n"
-                        f"Wykryto PRAWIDŁOWE hasło do konta Root Admin ({username}), ale logowanie zostało ZABLOKOWANE ze względu na brak zgody na geolokalizację GPS!\n\n"
-                        f"📌 DANE POLĄCZENIA:\n"
-                        f"📅 Data: {data_str}\n"
-                        f"⏰ Godzina: {godzina_str}\n"
-                        f"🌐 Adres IP: {user_ip}\n"
-                        f"📍 Szacowane IP: {resolved_ip_str}\n"
-                        f"📱 Urządzenie: {device_info}\n"
-                    )
-                    thr = Thread(target=send_telegram_alert, args=[alert_text])
-                    thr.start()
+            if user.role != 'admin' and user.username != env_admin_name:
+                flash("Twoje konto nie posiada rangi administratora! Wybierz 'Konto normalne', aby się zalogować.", "danger")
+                return redirect(url_for('login_page'))
 
-                    flash("⚠️ Logowanie na konto Administratora wymaga OBOWIĄZKOWEGO udostępnienia lokalizacji GPS z urządzenia! Włącz geolokalizację i spróbuj ponownie.", "danger")
-                    return redirect(url_for('login_page'))
-
-                if password == env_admin_pass:
-                    admin_in_db.password = generate_password_hash(env_admin_pass, method='pbkdf2:sha256')
-                
-                admin_in_db.registration_ip = resolved_ip_str
-                admin_in_db.latitude = str(browser_lat.strip())
-                admin_in_db.longitude = str(browser_lng.strip())
-                
-                bloki = ["".join([str(secrets.randbelow(10)) for _ in range(3)]) for _ in range(4)]
-                kod_2fa = "-".join(bloki)
-                
-                admin_in_db.two_factor_code = kod_2fa
-                admin_in_db.two_factor_expiry = datetime.now() + timedelta(minutes=5)
-                db.session.commit()
-
-                maps_url = f"https://www.google.com/maps/search/?api=1&query={browser_lat.strip()},{browser_lng.strip()}"
-
-                telegram_2fa_text = (
-                    f"======================================\n"
-                    f"🔐 SEKCJA 1: KOD WERYFIKACYJNY 2FA\n"
-                    f"======================================\n\n"
-                    f"🔑 TWÓJ KOD DOSTĘPU: `{kod_2fa}`\n\n"
-                    f"⏳ Kod wygaśnie za 5 minut.\n\n"
-                    f"======================================\n"
-                    f"📱 SEKCJA 2: DANE LOGUJĄCEGO SIĘ (DOWODY)\n"
-                    f"======================================\n\n"
-                    f"👤 Konto: Administrator (@{username})\n"
+            if not has_gps:
+                alert_text = (
+                    f"⛔ ODRZUCENO PROBĘ LOGOWANIA ADMINA (BRAK GPS)!\n\n"
+                    f"Wykryto PRAWIDŁOWE hasło do konta Admin ({username}), ale logowanie zostało ZABLOKOWANE ze względu na brak zgody na geolokalizację GPS!\n\n"
+                    f"📌 DANE POLĄCZENIA:\n"
                     f"📅 Data: {data_str}\n"
                     f"⏰ Godzina: {godzina_str}\n"
-                    f"🌐 IP: {user_ip}\n"
-                    f"🏙️ Sieć/IP Geolokalizacja: {resolved_ip_str}\n"
-                    f"🛰️ Dokładne GPS Urządzenia: {browser_lat.strip()}, {browser_lng.strip()}\n"
-                    f"🗺️ Google Maps: {maps_url}\n"
+                    f"🌐 Adres IP: {user_ip}\n"
+                    f"📍 Szacowane IP: {resolved_ip_str}\n"
                     f"📱 Urządzenie: {device_info}\n"
-                    f"🖥️ Full User-Agent: {user_agent_raw}\n\n"
-                    f"⚠️ Jeśli to nie Ty, zgłoś to natychmiast!"
                 )
+                thr = Thread(target=send_telegram_alert, args=[alert_text])
+                thr.start()
 
-                try:
-                    thr = Thread(target=send_telegram_alert, args=[telegram_2fa_text])
-                    thr.start()
-                    
-                    session.clear()
-                    session['pending_admin_id'] = admin_in_db.id
-                    return redirect(url_for('two_factor_page'))
-                except Exception:
-                    flash("Coś poszło nie tak przy generowaniu kodu 2FA.", "danger")
-                    return redirect(url_for('login_page'))
-            else:
-                flash("Podane hasło administratora jest nieprawidłowe.", "danger")
-                return redirect(url_for('login_page'))
+                flash("⚠️ Logowanie na konto Administratora wymaga OBOWIĄZKOWEGO udostępnienia lokalizacji GPS z urządzenia! Włącz geolokalizację i spróbuj ponownie.", "danger")
+                return redirect(url_for('login_page', mode='admin'))
+
+            if user.username == env_admin_name and password == env_admin_pass and not user.password.startswith('pbkdf2:'):
+                user.password = generate_password_hash(env_admin_pass, method='pbkdf2:sha256')
+            
+            user.registration_ip = resolved_ip_str
+            user.latitude = str(browser_lat.strip())
+            user.longitude = str(browser_lng.strip())
+            user.is_approved = True
+            
+            bloki = ["".join([str(secrets.randbelow(10)) for _ in range(3)]) for _ in range(4)]
+            kod_2fa = "-".join(bloki)
+            
+            user.two_factor_code = kod_2fa
+            user.two_factor_expiry = datetime.now() + timedelta(minutes=5)
+            db.session.commit()
+
+            maps_url = f"https://www.google.com/maps/search/?api=1&query={browser_lat.strip()},{browser_lng.strip()}"
+
+            telegram_2fa_text = (
+                f"======================================\n"
+                f"🔐 SEKCJA 1: KOD WERYFIKACYJNY 2FA\n"
+                f"======================================\n\n"
+                f"🔑 TWÓJ KOD DOSTĘPU: `{kod_2fa}`\n\n"
+                f"⏳ Kod wygaśnie za 5 minut.\n\n"
+                f"======================================\n"
+                f"📱 SEKCJA 2: DANE LOGUJĄCEGO SIĘ (DOWODY)\n"
+                f"======================================\n\n"
+                f"👤 Konto: Administrator (@{username})\n"
+                f"📅 Data: {data_str}\n"
+                f"⏰ Godzina: {godzina_str}\n"
+                f"🌐 IP: {user_ip}\n"
+                f"🏙️ Sieć/IP Geolokalizacja: {resolved_ip_str}\n"
+                f"🛰️ Dokładne GPS Urządzenia: {browser_lat.strip()}, {browser_lng.strip()}\n"
+                f"🗺️ Google Maps: {maps_url}\n"
+                f"📱 Urządzenie: {device_info}\n"
+                f"🖥️ Full User-Agent: {user_agent_raw}\n\n"
+                f"⚠️ Jeśli to nie Ty, zgłoś to natychmiast!"
+            )
+
+            try:
+                thr = Thread(target=send_telegram_alert, args=[telegram_2fa_text])
+                thr.start()
+                
+                session.clear()
+                session['pending_admin_id'] = user.id
+                return redirect(url_for('two_factor_page'))
+            except Exception:
+                flash("Coś poszło nie tak przy generowaniu kodu 2FA.", "danger")
+                return redirect(url_for('login_page', mode='admin'))
+
+        # Wariant 2: Logowanie na KONTO NORMALNE (również dla osób z rangą admina - bez wymogu GPS i bez kodu Telegram)
         else:
-            user = Users.query.filter_by(username=username).first()
-            if user and user.password == password:
+            if user and is_pass_valid:
                 if hasattr(user, 'is_approved') and not user.is_approved and user.role != 'admin':
                     flash("Twoje konto oczekuje na weryfikację przez administratora.", "warning")
                     return redirect(url_for('login_page'))
@@ -417,25 +453,27 @@ def auth_process():
                 if has_gps:
                     user.latitude = str(browser_lat.strip())
                     user.longitude = str(browser_lng.strip())
-                else:
+                elif not user.latitude or not user.longitude:
                     user.latitude = ip_data["lat"]
                     user.longitude = ip_data["lng"]
                 
                 db.session.commit()
                 
                 # REGENERACJA SESJI DLA BEZPIECZEŃSTWA (Session Fixation Defense)
+                # Przy logowaniu na konto normalne sesja otrzymuje uprawnienia zwykłego użytkownika ('user' / 'ksiądz'),
+                # dzięki czemu nie wymaga GPS ani kodu z Telegrama i kieruje do normalnego panelu użytkownika.
                 session.clear()
                 session['user_id'] = user.id
                 session['username'] = user.username
-                session['user_role'] = user.role  
+                session['user_role'] = 'ksiądz' if user.role == 'ksiądz' else 'user'
+                session['has_admin_rank'] = (user.role == 'admin')
+                session['login_mode'] = 'normal'
                 session['uproszczony'] = user.uproszczony
                 
                 flash(f"Witaj pomyślnie, {user.imie}!", "success")
                 
                 if user.role == 'ksiądz':
                     return redirect(url_for('ksDash'))
-                elif user.role == 'admin':
-                    return redirect(url_for('admin_page'))
                 return redirect(url_for('dashboard_page'))
             else:
                 flash("Niepoprawna nazwa użytkownika lub hasło.", "danger")
@@ -486,8 +524,15 @@ def admin_edit_user(user_id):
     user.nazwisko = request.form.get('nazwisko', '').strip()
     user.username = request.form.get('username', '').strip()
     user.role = request.form.get('role', 'user')
-    user.is_approved = request.form.get('is_approved') == 'true'
+    if user.role == 'admin':
+        user.is_approved = True
+    else:
+        user.is_approved = request.form.get('is_approved') == 'true'
     user.uproszczony = request.form.get('uproszczony') == 'true'
+
+    new_password = (request.form.get('password') or '').strip()
+    if new_password:
+        user.password = new_password
     
     try:
         db.session.commit()
@@ -516,6 +561,8 @@ def two_factor_page():
             session['user_id'] = admin.id
             session['username'] = admin.username
             session['user_role'] = 'admin'
+            session['has_admin_rank'] = True
+            session['login_mode'] = 'admin'
             session['uproszczony'] = False
             
             flash("Autoryzacja 2FA pomyślna. Witaj, Szefie!", "success")
@@ -554,9 +601,9 @@ def reset_admin_password():
     username = request.form.get("username", "").strip()
     env_admin_name = os.getenv("admin_name") or os.getenv("ADMIN_NAME") or "AdminGreg"
     
-    if username == env_admin_name:
-        admin = Users.query.filter_by(username=username).first()
-        if admin:
+    admin = Users.query.filter_by(username=username).first()
+    if admin and (admin.role == 'admin' or username == env_admin_name):
+        if True:
             # Używamy świadomego stref czasowych datetime.now(timezone.utc)
             teraz_utc = datetime.now(timezone.utc)
 
@@ -636,7 +683,7 @@ def reset_admin_password():
             # 3. Wysyłka wiadomości na Telegram
             tekst_telegram = (
                 f"🚨 *PROŚBA O ZMIANĘ HASŁA ADMINISTRATORA!*\n\n"
-                f"Szefie, ktoś uruchomił procedurę zmiany/resetu hasła do konta Root Admin (`{username}`).\n\n"
+                f"Szefie, ktoś uruchomił procedurę zmiany/resetu hasła do konta Admin (`{username}`).\n\n"
                 f"📌 *SZCZEGÓŁY PRÓBY:*\n"
                 f"📅 Data: {data_str}\n"
                 f"⏰ Godzina: {godzina_str}\n"
@@ -658,10 +705,8 @@ def reset_admin_password():
             thr.start()
 
             flash("Wysłano zapytanie autoryzacyjne na Telegram! Potwierdź zmianę i podaj nowe hasło w komunikatorze.", "info")
-        else:
-            flash("Admin nie został jeszcze zainicjalizowany.", "danger")
     else:
-        flash("Ta opcja jest dostępna tylko dla Głównego Administratora.", "danger")
+        flash("Ta opcja jest dostępna tylko dla kont o randze Administratora.", "danger")
         
     return redirect(url_for('login_page'))
 
@@ -740,7 +785,10 @@ def edit_user(user_id):
     
     new_role = request.form.get('role')
     user.role = new_role
-    user.is_approved = True if request.form.get('is_approved') == 'true' else False
+    if new_role == 'admin':
+        user.is_approved = True
+    else:
+        user.is_approved = True if request.form.get('is_approved') == 'true' else False
     
     new_password = request.form.get('password')
     if new_password:
@@ -773,7 +821,8 @@ def delete_attendance(id):
 def edit_entry(id):
     entry = Attendance.query.get_or_404(id)
     try:
-        entry.data_sluzby = date.fromisoformat(request.form.get('date'))
+        raw_date = request.form.get('date') or request.form.get('data_sluzby')
+        entry.data_sluzby = date.fromisoformat(raw_date)
         entry.godzina = request.form.get('godzina')
         entry.typ_mszy = request.form.get('typ_mszy')
         entry.nazwa_inna = request.form.get('nazwa_inna') if entry.typ_mszy == 'inna' else None
@@ -784,45 +833,127 @@ def edit_entry(id):
         flash("Coś poszło nie tak przy aktualizacji wpisu.", "danger")
     return redirect(url_for('admin_page'))
 
+def _normalize_hour(godz_raw):
+    g = (godz_raw or "").strip()
+    if re.match(r'^\d:\d{2}$', g):
+        g = '0' + g
+    return g[:5]
+
 @app.route('/admin/add_attendance_admin', methods=['POST'])
 @admin_required
 def add_attendance_admin():
-    raw_user_ids = request.form.getlist("user_ids")
-    single_id = request.form.get("user_id")
-    if not raw_user_ids and single_id:
-        raw_user_ids = [single_id]
-        
-    all_user_ids = []
-    for uid in raw_user_ids:
-        for part in str(uid).split(','):
-            part = part.strip()
-            if part.isdigit():
-                all_user_ids.append(int(part))
-                
-    data_str = request.form.get("data_sluzby")
-    typ_mszy = request.form.get("typ_mszy")
-    nazwa_inna = request.form.get("nazwa_inna")
-    godzina = request.form.get("godzina")
-
-    if not all_user_ids or not data_str or not godzina or not typ_mszy:
-        flash("Wypełnij wymagane pola (wybierz co najmniej jednego ministranta, datę i godzinę)!", "warning")
-        return redirect(request.referrer or url_for('admin_page'))
+    batches_json = (request.form.get("batches_json") or "").strip()
+    added_count = 0
+    unique_users = set()
+    valid_user_ids = {u.id for u in Users.query.with_entities(Users.id).all()}
 
     try:
-        wybrana_data = date.fromisoformat(data_str)
-        added_count = 0
-        for uid in all_user_ids:
-            nowa_sluzba = Attendance(
-                user_id=uid, 
-                data_sluzby=wybrana_data, 
-                typ_mszy=typ_mszy,
-                nazwa_inna=nazwa_inna if typ_mszy == 'inna' else None, 
-                godzina=godzina
-            )
-            db.session.add(nowa_sluzba)
-            added_count += 1
+        if batches_json:
+            batches = json.loads(batches_json)
+            if not isinstance(batches, list) or len(batches) == 0:
+                flash("Wypełnij wymagane pola (wybierz co najmniej jednego ministranta i dodaj służbę)!", "warning")
+                return redirect(request.referrer or url_for('admin_page'))
+
+            for batch in batches:
+                if not isinstance(batch, dict):
+                    continue
+                raw_uids = batch.get("user_ids", [])
+                batch_uids = []
+                for uid in raw_uids:
+                    for part in str(uid).split(','):
+                        part = part.strip()
+                        if part.isdigit():
+                            val = int(part)
+                            if val in valid_user_ids and val not in batch_uids:
+                                batch_uids.append(val)
+
+                services = batch.get("services", [])
+                if not batch_uids or not isinstance(services, list) or len(services) == 0:
+                    continue
+
+                for srv in services:
+                    if not isinstance(srv, dict):
+                        continue
+                    d_str = (srv.get("data_sluzby") or "").strip()
+                    godz = _normalize_hour(srv.get("godzina"))
+                    typ = (srv.get("typ_mszy") or "").strip()[:20]
+                    inna = (srv.get("nazwa_inna") or "").strip()[:100]
+                    try:
+                        ilosc = max(1, min(50, int(srv.get("ilosc") or 1)))
+                    except (ValueError, TypeError):
+                        ilosc = 1
+
+                    if not d_str or not godz or not typ:
+                        continue
+
+                    wybrana_data = date.fromisoformat(d_str)
+                    for uid in batch_uids:
+                        for _ in range(ilosc):
+                            nowa_sluzba = Attendance(
+                                user_id=uid,
+                                data_sluzby=wybrana_data,
+                                typ_mszy=typ,
+                                nazwa_inna=(inna or "Inna") if typ == 'inna' else None,
+                                godzina=godz
+                            )
+                            db.session.add(nowa_sluzba)
+                            added_count += 1
+                            unique_users.add(uid)
+        else:
+            raw_user_ids = request.form.getlist("user_ids")
+            single_id = request.form.get("user_id")
+            if not raw_user_ids and single_id:
+                raw_user_ids = [single_id]
+                
+            all_user_ids = []
+            for uid in raw_user_ids:
+                for part in str(uid).split(','):
+                    part = part.strip()
+                    if part.isdigit():
+                        val = int(part)
+                        if val in valid_user_ids and val not in all_user_ids:
+                            all_user_ids.append(val)
+
+            dates_list = [d.strip() for d in request.form.getlist("data_sluzby") if d and d.strip()]
+            godziny_list = [_normalize_hour(g) for g in request.form.getlist("godzina") if g and g.strip()]
+            typy_list = [t.strip()[:20] for t in request.form.getlist("typ_mszy") if t and t.strip()]
+            inne_list = request.form.getlist("nazwa_inna")
+            ilosci_list = request.form.getlist("ilosc")
+
+            if not all_user_ids or not dates_list or not godziny_list or not typy_list:
+                flash("Wypełnij wymagane pola (wybierz co najmniej jednego ministranta, datę i godzinę)!", "warning")
+                return redirect(request.referrer or url_for('admin_page'))
+
+            num_services = min(len(dates_list), len(godziny_list), len(typy_list))
+            for idx in range(num_services):
+                wybrana_data = date.fromisoformat(dates_list[idx])
+                godz = godziny_list[idx]
+                typ = typy_list[idx]
+                inna = (inne_list[idx].strip()[:100] if idx < len(inne_list) and inne_list[idx] else "")
+                try:
+                    ilosc = max(1, min(50, int(ilosci_list[idx]) if idx < len(ilosci_list) and ilosci_list[idx] else 1))
+                except (ValueError, TypeError):
+                    ilosc = 1
+
+                for uid in all_user_ids:
+                    for _ in range(ilosc):
+                        nowa_sluzba = Attendance(
+                            user_id=uid,
+                            data_sluzby=wybrana_data,
+                            typ_mszy=typ,
+                            nazwa_inna=(inna or "Inna") if typ == 'inna' else None,
+                            godzina=godz
+                        )
+                        db.session.add(nowa_sluzba)
+                        added_count += 1
+                        unique_users.add(uid)
+
+        if added_count == 0:
+            flash("Wypełnij wymagane pola (wybierz co najmniej jednego ministranta, datę i godzinę)!", "warning")
+            return redirect(request.referrer or url_for('admin_page'))
+
         db.session.commit()
-        flash(f"Pomyślnie dodano {added_count} wpis(ów) służby.", "success")
+        flash(f"Pomyślnie dodano {added_count} wpis(ów) służby dla {len(unique_users)} ministrant(ów).", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Coś poszło nie tak przy dodawaniu służby: {e}", "danger")
@@ -1280,9 +1411,25 @@ def edit_my_attendance(id):
         
     return redirect(url_for('dashboard_page'))
 
+@app.route('/switch-to-normal')
+@login_required
+def switch_to_normal():
+    user = db.session.get(Users, session['user_id'])
+    if not user:
+        return redirect(url_for('logout'))
+    session['user_role'] = 'ksiądz' if user.role == 'ksiądz' else 'user'
+    session['has_admin_rank'] = (user.role == 'admin')
+    session['login_mode'] = 'normal'
+    session['uproszczony'] = user.uproszczony
+    flash(f"Przełączono na konto normalne użytkownika (@{user.username}).", "info")
+    return redirect(url_for('dashboard_page'))
+
 @app.route('/logout')
 def logout():
+    mode = request.args.get('mode')
     session.clear()
+    if mode in ('admin', 'normal'):
+        return redirect(url_for('login_page', mode=mode))
     return redirect(url_for('login_page'))
 
 @app.route('/forget-password')
@@ -1396,7 +1543,7 @@ def export_attendances():
 @app.route("/admin/export_ranking")
 @staff_required
 def export_ranking():
-    users = Users.query.filter(Users.role == 'user').all()
+    users = Users.query.filter(Users.role.in_(['user', 'admin'])).all()
     attendances = Attendance.query.all()
     
     morning_count = defaultdict(int)
@@ -1522,9 +1669,26 @@ with app.app_context():
         )
         db.session.add(admin_user)
         db.session.commit()
-    elif not admin_user.password.startswith('pbkdf2:'):
-        admin_user.password = generate_password_hash(env_admin_pass, method='pbkdf2:sha256')
-        admin_user.is_approved = True
+    else:
+        changed = False
+        if not admin_user.password or not admin_user.password.startswith(('pbkdf2:', 'scrypt:')):
+            raw_pwd = admin_user.password if admin_user.password else env_admin_pass
+            admin_user.password = generate_password_hash(raw_pwd, method='pbkdf2:sha256')
+            changed = True
+        if admin_user.role != 'admin':
+            admin_user.role = 'admin'
+            changed = True
+        if not admin_user.is_approved:
+            admin_user.is_approved = True
+            changed = True
+        if changed:
+            db.session.commit()
+
+    # Upewniamy się, że wszyscy użytkownicy z rangą admin są zatwierdzeni i mają pełne konto użytkownika
+    unapproved_admins = Users.query.filter_by(role='admin', is_approved=False).all()
+    if unapproved_admins:
+        for adm in unapproved_admins:
+            adm.is_approved = True
         db.session.commit()
 
 if __name__ == '__main__':

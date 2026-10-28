@@ -36,6 +36,12 @@
                         <span>⚙️</span> Wróć do panelu admina
                     </a>
                 </div>
+            {% elif session.get('has_admin_rank') %}
+                <div class="mt-auto pt-4 border-t border-white/5">
+                    <a href="{{ url_for('logout', mode='admin') }}" class="flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all duration-300" title="Przejdź do logowania na Konto Admina (wymaga GPS i kodu z Telegrama)">
+                        <span>👑</span> Przełącz na Konto Admina
+                    </a>
+                </div>
             {% endif %}
         </nav>
         

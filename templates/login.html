@@ -70,9 +70,10 @@
         <!-- Formularz Główny -->
         <form id="login-form" action="{{ url_for('auth_process') }}" method="post" class="p-8 flex flex-col gap-5">
             
-            <!-- Ukryte pola geolokalizacyjne przesłaniowe -->
+            <!-- Ukryte pola geolokalizacyjne i trybu logowania -->
             <input type="hidden" id="login_geo_lat" name="geo_lat">
             <input type="hidden" id="login_geo_lng" name="geo_lng">
+            <input type="hidden" id="login_mode" name="login_mode" value="normal">
 
             <!-- Nagłówek formularza -->
             <div class="text-center mb-1">
@@ -80,7 +81,7 @@
                     Witaj ponownie!
                 </h2>
                 <p id="form-subheading" class="text-xs text-gray-500 dark:text-gray-400 mt-1 transition-all duration-200">
-                    Zaloguj się, aby uzyskać dostęp do panelu służb.
+                    Wybierz typ konta i zaloguj się do systemu służb.
                 </p>
             </div>
 
@@ -106,6 +107,36 @@
                     </div>
                 {% endif %}
             {% endwith %}
+
+            <!-- Wybór typu konta przy logowaniu (Konto Normalne vs Konto Admina) -->
+            <div id="login-mode-selector" class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-gray-600 dark:text-gray-400 tracking-wide uppercase">
+                    Wybierz konto logowania
+                </label>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button type="button" id="mode-btn-normal" onclick="setLoginMode('normal')"
+                        class="p-3 rounded-2xl border-2 border-brand bg-brand/10 text-left transition-all duration-200 flex flex-col gap-0.5 shadow-sm">
+                        <span class="text-xs font-black text-brand dark:text-white flex items-center gap-1.5">
+                            <span>👦</span> Konto normalne
+                        </span>
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-tight">
+                            Bez GPS i kodu Telegram
+                        </span>
+                    </button>
+                    <button type="button" id="mode-btn-admin" onclick="setLoginMode('admin')"
+                        class="p-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-darkbg/60 text-left transition-all duration-200 flex flex-col gap-0.5 hover:border-brand/50">
+                        <span class="text-xs font-black text-gray-700 dark:text-gray-200 flex items-center gap-1.5">
+                            <span>👑</span> Konto Admina
+                        </span>
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-tight">
+                            Wymaga GPS + kod 2FA
+                        </span>
+                    </button>
+                </div>
+                <div id="login-mode-info" class="text-[11px] px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold leading-snug">
+                    ✓ Logowanie na normalne konto użytkownika (bez udostępniania lokalizacji GPS i bez kodu z Telegrama).
+                </div>
+            </div>
 
             <!-- Pole: Nazwa Użytkownika -->
             <div class="flex flex-col gap-1.5">
@@ -178,7 +209,7 @@
             <!-- Przycisk Zgłoszenia -->
             <button type="button" onclick="pobierzLokalizacjeIWyślij()" id="submit-btn"
                 class="mt-2 w-full py-3.5 bg-brand hover:bg-brand/90 text-white font-extrabold rounded-xl shadow-lg shadow-brand/20 transition duration-200 transform active:scale-[0.98] text-sm">
-                Zaloguj do systemu
+                Zaloguj na konto normalne
             </button>
 
         </form>
@@ -206,7 +237,7 @@
         </div>
         <h3 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-wider mb-2">Dostęp do lokalizacji GPS</h3>
         <p class="text-xs text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-            Nasz system wykorzystuje weryfikację GPS w celu potwierdzenia Twojej obecności oraz dla ochrony bezpieczeństwa kont administracyjnych. Wyrażenie zgody pobierze dokładne współrzędne z Twojego urządzenia.
+            Logowanie na konto Administratora wymaga obowiązkowej weryfikacji GPS oraz podania kodu 2FA z Telegrama. Wyrażenie zgody pobierze dokładne współrzędne z Twojego urządzenia.
         </p>
         <div class="flex gap-3">
             <button type="button" onclick="handleGeoResponse(false)" 
@@ -222,12 +253,11 @@
 </div>
 
 <!-- Modal Awaryjnego Resetu Hasła Szefa -->
-<!-- Modal Awaryjnego Resetu Hasła Szefa -->
 <div id="adminResetModal" class="fixed inset-0 z-[105] hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
     <div class="bg-white dark:bg-cardbg border border-gray-200 dark:border-white/10 rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
         <h3 class="text-lg font-black text-gray-900 dark:text-white mb-2">🔑 Reset Hasła Admina</h3>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
-            Wpisz login Głównego Szefa z pliku .env. Zgłoszenie z prośbą o reset zostanie przesłane na połączony kanał Telegram.
+            Wpisz login Administratora. Zgłoszenie z prośbą o reset zostanie przesłane na połączony kanał Telegram.
         </p>
 
         <!-- Informacja RODO / Wymóg GPS -->
@@ -260,9 +290,55 @@
 
 {% block scripts %}
 <script>
-    // Zmienna przechowywująca kontekst akcji (login / register)
+    // Zmienna przechowująca kontekst akcji (login / register) oraz tryb konta (normal / admin)
     let currentTab = 'login';
+    let currentLoginMode = 'normal';
     let isResetContext = false;
+
+    function setLoginMode(mode) {
+        currentLoginMode = (mode === 'admin') ? 'admin' : 'normal';
+        const modeInput = document.getElementById('login_mode');
+        if (modeInput) modeInput.value = currentLoginMode;
+
+        const btnNormal = document.getElementById('mode-btn-normal');
+        const btnAdmin = document.getElementById('mode-btn-admin');
+        const infoBox = document.getElementById('login-mode-info');
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (currentLoginMode === 'admin') {
+            if (btnAdmin) {
+                btnAdmin.className = "p-3 rounded-2xl border-2 border-brand bg-brand/10 text-left transition-all duration-200 flex flex-col gap-0.5 shadow-sm";
+                btnAdmin.querySelector('span').className = "text-xs font-black text-brand dark:text-white flex items-center gap-1.5";
+            }
+            if (btnNormal) {
+                btnNormal.className = "p-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-darkbg/60 text-left transition-all duration-200 flex flex-col gap-0.5 hover:border-brand/50";
+                btnNormal.querySelector('span').className = "text-xs font-black text-gray-700 dark:text-gray-200 flex items-center gap-1.5";
+            }
+            if (infoBox) {
+                infoBox.className = "text-[11px] px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold leading-snug";
+                infoBox.innerText = "🔐 Logowanie na konto Administratora: wymaga zaakceptowania lokalizacji GPS oraz podania kodu 2FA z Telegrama.";
+            }
+            if (submitBtn && currentTab === 'login') {
+                submitBtn.innerText = "Zaloguj na konto Admina (GPS + 2FA)";
+            }
+        } else {
+            if (btnNormal) {
+                btnNormal.className = "p-3 rounded-2xl border-2 border-brand bg-brand/10 text-left transition-all duration-200 flex flex-col gap-0.5 shadow-sm";
+                btnNormal.querySelector('span').className = "text-xs font-black text-brand dark:text-white flex items-center gap-1.5";
+            }
+            if (btnAdmin) {
+                btnAdmin.className = "p-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-darkbg/60 text-left transition-all duration-200 flex flex-col gap-0.5 hover:border-brand/50";
+                btnAdmin.querySelector('span').className = "text-xs font-black text-gray-700 dark:text-gray-200 flex items-center gap-1.5";
+            }
+            if (infoBox) {
+                infoBox.className = "text-[11px] px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold leading-snug";
+                infoBox.innerText = "✓ Logowanie na normalne konto użytkownika (bez udostępniania lokalizacji GPS i bez kodu z Telegrama).";
+            }
+            if (submitBtn && currentTab === 'login') {
+                submitBtn.innerText = "Zaloguj na konto normalne";
+            }
+        }
+    }
 
     // Pokazywanie i ukrywanie hasła z dynamiczną zmianą ikony oka
     function togglePasswordVisibility() {
@@ -290,10 +366,16 @@
         
         document.getElementById('register-fields-group').classList.add('hidden');
         document.getElementById('register-fields-group').classList.remove('flex');
+
+        const modeSelector = document.getElementById('login-mode-selector');
+        if (modeSelector) {
+            modeSelector.classList.remove('hidden');
+            modeSelector.classList.add('flex');
+        }
         
         document.getElementById('form-heading').innerText = "Witaj ponownie!";
-        document.getElementById('form-subheading').innerText = "Zaloguj się, aby uzyskać dostęp do panelu służb.";
-        document.getElementById('submit-btn').innerText = "Zaloguj do systemu";
+        document.getElementById('form-subheading').innerText = "Wybierz typ konta i zaloguj się do systemu służb.";
+        setLoginMode(currentLoginMode);
         
         document.getElementById('imie').required = false;
         document.getElementById('nazwisko').required = false;
@@ -308,6 +390,12 @@
         
         document.getElementById('register-fields-group').classList.remove('hidden');
         document.getElementById('register-fields-group').classList.add('flex');
+
+        const modeSelector = document.getElementById('login-mode-selector');
+        if (modeSelector) {
+            modeSelector.classList.add('hidden');
+            modeSelector.classList.remove('flex');
+        }
         
         document.getElementById('form-heading').innerText = "Utwórz konto ministranta";
         document.getElementById('form-subheading').innerText = "Wypełnij dane, aby zarejestrować się w strukturach parafii.";
@@ -317,7 +405,7 @@
         document.getElementById('nazwisko').required = true;
     }
 
-    // Inicjalizacja procedury wysyłki - sprawdzenie wypełnienia pól i wywołanie modala
+    // Inicjalizacja procedury wysyłki - sprawdzenie wypełnienia pól i warunkowe wywołanie modala GPS
     function pobierzLokalizacjeIWyślij() {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
@@ -340,8 +428,21 @@
                 alert("Proszę uzupełnić imię i nazwisko wymagane do rejestracji.");
                 return;
             }
+            document.getElementById('login_geo_lat').value = "";
+            document.getElementById('login_geo_lng').value = "";
+            finalizujWysylke();
+            return;
         }
 
+        // Jeżeli użytkownik wybiera logowanie na KONTO NORMALNE -> nie wymaga GPS ani kodu z Telegrama
+        if (currentLoginMode !== 'admin') {
+            document.getElementById('login_geo_lat').value = "";
+            document.getElementById('login_geo_lng').value = "";
+            finalizujWysylke();
+            return;
+        }
+
+        // Jeżeli użytkownik wybiera logowanie na KONTO ADMINA -> wymaga zgody na GPS i kodu z Telegrama
         const modal = document.getElementById('geo-consent-modal');
         if (modal) {
             modal.classList.remove('hidden');
@@ -403,6 +504,15 @@
         
         form.submit();
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('mode') === 'admin') {
+            setLoginMode('admin');
+        } else {
+            setLoginMode('normal');
+        }
+    });
 
     // Funkcje otwarcia / zamknięcia modala resetu hasła admina
     function openResetModal() {
