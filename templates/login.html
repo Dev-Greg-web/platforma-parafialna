@@ -133,6 +133,9 @@
                         </span>
                     </button>
                 </div>
+                <div id="login-mode-info" class="text-[11px] px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold leading-snug">
+                    ✓ Logowanie na normalne konto użytkownika (bez udostępniania lokalizacji GPS i bez kodu z Telegrama).
+                </div>
             </div>
 
             <!-- Pole: Nazwa Użytkownika -->
@@ -329,6 +332,7 @@
             }
             if (infoBox) {
                 infoBox.className = "text-[11px] px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold leading-snug";
+                infoBox.innerText = "✓ Logowanie na normalne konto użytkownika (bez udostępniania lokalizacji GPS i bez kodu z Telegrama).";
             }
             if (submitBtn && currentTab === 'login') {
                 submitBtn.innerText = "Zaloguj na konto normalne";
