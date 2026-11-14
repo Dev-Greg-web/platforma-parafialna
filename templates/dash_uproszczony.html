@@ -47,10 +47,11 @@
         {% endif %}
 
         <form method="POST" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Data służby:</label>
-                    <input type="date" name="data_sluzby" required 
+                    <input type="date" name="data_sluzby" required min="{{ min_attendance_date }}" max="{{ max_attendance_date }}" value="{{ max_attendance_date }}"
                         class="p-3 bg-slate-900/60 border border-white/10 text-white rounded-xl outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition font-medium text-sm">
                 </div>
                 
@@ -87,6 +88,14 @@
                 class="w-full mt-2 p-3.5 bg-brand hover:bg-brand/90 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-brand/20 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
                 🚀 Dodaj Służbę
             </button>
+            <div class="p-3 rounded-xl bg-brand/10 border border-brand/20 text-xs text-gray-300 text-center">
+                ℹ️ Możesz wpisać służbę:
+                {% if attendance_days_back == 0 %}
+                    <strong class="text-white">tylko dzisiaj (0 dni wstecz)</strong>
+                {% else %}
+                    do <strong class="text-white">{{ attendance_days_back }} dni wstecz</strong> ({{ min_attendance_date }} – {{ max_attendance_date }})
+                {% endif %}
+            </div>
         </form>
     </div>
 
@@ -97,17 +106,18 @@
         
         {% if attendances %}
         <div class="flex flex-col gap-3">
-        {% for att in attendances|slice(3) %}
+        {% for att in attendances[:3] %}
             <div class="bg-slate-900/40 border border-white/5 p-4 rounded-xl flex justify-between items-center hover:border-white/10 transition duration-200">
                 <div class="flex flex-col">
                     <span class="font-bold text-white text-base">{{ att.data_sluzby.strftime('%d.%m.%Y') }}</span>
                     <span class="text-xs text-gray-400">o godz. {{ att.godzina }} {% if att.typ_mszy == 'inna' %}({{ att.nazwa_inna }}){% else %}({{ att.typ_mszy }}){% endif %}</span>
                 </div>
-                <a href="{{ url_for('delete_my_attendance', id=att.id) }}" 
-                   class="text-danger font-bold text-xl px-3 py-1 hover:bg-danger/10 rounded-xl transition animate-none" 
-                   onclick="return confirm('Czy na pewno chcesz usunąć tę służbę?')">
-                    &times;
-                </a>
+                <form action="{{ url_for('delete_my_attendance', id=att.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno chcesz usunąć tę służbę?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-danger font-bold text-xl px-3 py-1 hover:bg-danger/10 rounded-xl transition animate-none">
+                        &times;
+                    </button>
+                </form>
             </div>
         {% endfor %}
         </div>

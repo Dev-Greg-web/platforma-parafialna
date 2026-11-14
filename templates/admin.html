@@ -257,9 +257,44 @@
                     <a href="{{ url_for('export_attendances') }}" class="bg-gradient-to-r from-brand to-purple-600 text-white px-5 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:-translate-y-0.5 transition duration-300 flex items-center gap-2">
                         <span>📥</span> Eksportuj Służby (.xlsx)
                     </a>
+                    <form action="{{ url_for('export_drive_now') }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 px-5 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:-translate-y-0.5 transition duration-300 flex items-center gap-2">
+                            <span>☁️</span> Wyślij Eksport na Dysk Google
+                        </button>
+                    </form>
                     <button class="bg-gradient-to-r from-success to-green-400 text-white px-6 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:-translate-y-0.5 transition duration-300 flex items-center gap-2" onclick="openModal('addAttendanceModal')">
                         <span>➕</span> Dodaj Służby (Ręcznie / Masowo)
                     </button>
+                </div>
+            </div>
+
+            <!-- KARTA: OKNO CZASOWE ZGŁASZANIA SŁUŻB -->
+            <div class="glass-card rounded-3xl p-6 border border-white/5 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-black text-white flex items-center gap-2">
+                            <span>⏳</span> Okno czasowe zgłaszania służb
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-1">
+                            Określ, do ilu dni wstecz ministranci mogą samodzielnie dopisywać służby (aktualnie: <strong class="text-brand">{{ attendance_days_back|default(3) }} dni wstecz</strong>).
+                        </p>
+                    </div>
+                    <form action="{{ url_for('update_attendance_window') }}" method="POST" class="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" onclick="setDaysBackPreset(0, this)" class="px-3 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand' if attendance_days_back == 0 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">Tylko dziś (0)</button>
+                        <button type="button" onclick="setDaysBackPreset(3, this)" class="px-3 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand' if attendance_days_back == 3 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">3 dni</button>
+                        <button type="button" onclick="setDaysBackPreset(7, this)" class="px-3 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand' if attendance_days_back == 7 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">7 dni</button>
+                        <button type="button" onclick="setDaysBackPreset(14, this)" class="px-3 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand' if attendance_days_back == 14 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">14 dni</button>
+                        <button type="button" onclick="setDaysBackPreset(30, this)" class="px-3 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand' if attendance_days_back == 30 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">30 dni</button>
+                        <div class="flex items-center gap-1.5 ml-1">
+                            <input type="number" name="days_back" id="sluzby_days_back_input" value="{{ attendance_days_back|default(3) }}" min="0" max="365" required
+                                class="w-20 bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2 text-center text-white text-xs font-mono font-bold focus:outline-none focus:border-brand">
+                            <button type="submit" class="bg-brand hover:bg-brand/90 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition shadow-brand-glow">
+                                💾 Zapisz limit
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
             
@@ -277,63 +312,71 @@
                 </div>
             </div>
 
-            <form id="bulk-att-form" action="{{ url_for('delete_bulk_attendances') }}" method="POST">
-                <div class="glass-card rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-white/5 border-b border-white/5 text-gray-300 font-bold text-xs uppercase tracking-wider">
-                                    <th class="p-4 md:p-5 w-12 text-center">
-                                        <input type="checkbox" id="select-all-atts" onchange="toggleAllAttendances(this)" class="w-4 h-4 rounded accent-brand cursor-pointer" title="Zaznacz wszystkie widoczne">
-                                    </th>
-                                    <th class="p-4 md:p-5">Id</th>
-                                    <th class="p-4 md:p-5">Użytkownik</th>
-                                    <th class="p-4 md:p-5">Data Służby</th>
-                                    <th class="p-4 md:p-5">Godzina</th>
-                                    <th class="p-4 md:p-5">Typ Liturgii</th>
-                                    <th class="p-4 md:p-5 text-center">Akcje</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-white/5 text-sm">
-                                {% for att, uzytkownik in attendances %}
-                                <tr class="attendance-row hover:bg-white/5 transition duration-200 text-gray-200" data-username="{{ uzytkownik.username }}">
-                                    <td class="p-4 md:p-5 text-center">
-                                        <input type="checkbox" name="att_ids" value="{{ att.id }}" onchange="updateAttSelectionCount()" class="att-checkbox w-4 h-4 rounded accent-brand cursor-pointer">
-                                    </td>
-                                    <td class="p-4 md:p-5 font-mono text-xs text-gray-500">#{{ att.id }}</td>
-                                    <td class="p-4 md:p-5 font-bold text-white">
-                                        {{ uzytkownik.imie }} {{ uzytkownik.nazwisko }} <span class="text-brand font-normal text-xs block">@{{ uzytkownik.username }}</span>
-                                    </td>
-                                    <td class="p-4 md:p-5 font-medium font-mono">{{ att.data_sluzby }}</td>
-                                    <td class="p-4 md:p-5 font-bold font-mono text-brand">{{ att.godzina }}</td>
-                                    <td class="p-4 md:p-5">
-                                        {% if att.typ_mszy == 'inna' %}
-                                            <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1 rounded-lg text-xs font-bold">Inna: {{ att.nazwa_inna }}</span>
-                                        {% else %}
-                                            <span class="bg-brand/10 text-brand-400 border border-brand/20 px-3 py-1 rounded-lg text-xs font-bold uppercase">{{ att.typ_mszy }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="p-4 md:p-5">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <button type="button" 
-                                                    onclick="openAdminEditModal('{{ att.id }}', '{{ att.data_sluzby }}', '{{ att.godzina }}', '{{ att.typ_mszy }}', '{{ att.nazwa_inna }}' || '')"
-                                                    class="bg-brand/20 hover:bg-brand text-white text-xs font-bold px-3 py-2 rounded-xl transition">
-                                                ✏️ Edytuj
-                                            </button>
-                                            <a href="{{ url_for('delete_attendance', id=att.id) }}" 
-                                               class="bg-danger/10 hover:bg-danger/20 text-danger p-2 rounded-xl transition duration-300 text-xs font-bold"
-                                               onclick="return confirm('Czy na pewno bezpowrotnie skasować ten rekord obecności?')">
-                                                🗑️ Usuń
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <form id="bulk-att-form" action="{{ url_for('delete_bulk_attendances') }}" method="POST" class="hidden">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             </form>
+
+            <div class="glass-card rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/5 border-b border-white/5 text-gray-300 font-bold text-xs uppercase tracking-wider">
+                                <th class="p-4 md:p-5 w-12 text-center">
+                                    <input type="checkbox" id="select-all-atts" onchange="toggleAllAttendances(this)" class="w-4 h-4 rounded accent-brand cursor-pointer" title="Zaznacz wszystkie widoczne">
+                                </th>
+                                <th class="p-4 md:p-5">Id</th>
+                                <th class="p-4 md:p-5">Użytkownik</th>
+                                <th class="p-4 md:p-5">Data Służby</th>
+                                <th class="p-4 md:p-5">Godzina</th>
+                                <th class="p-4 md:p-5">Typ Liturgii</th>
+                                <th class="p-4 md:p-5 text-center">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5 text-sm">
+                            {% for att, uzytkownik in attendances %}
+                            <tr class="attendance-row hover:bg-white/5 transition duration-200 text-gray-200" data-username="{{ uzytkownik.username }}">
+                                <td class="p-4 md:p-5 text-center">
+                                    <input type="checkbox" form="bulk-att-form" name="att_ids" value="{{ att.id }}" onchange="updateAttSelectionCount()" class="att-checkbox w-4 h-4 rounded accent-brand cursor-pointer">
+                                </td>
+                                <td class="p-4 md:p-5 font-mono text-xs text-gray-500">#{{ att.id }}</td>
+                                <td class="p-4 md:p-5 font-bold text-white">
+                                    {{ uzytkownik.imie }} {{ uzytkownik.nazwisko }} <span class="text-brand font-normal text-xs block">@{{ uzytkownik.username }}</span>
+                                </td>
+                                <td class="p-4 md:p-5 font-medium font-mono">{{ att.data_sluzby }}</td>
+                                <td class="p-4 md:p-5 font-bold font-mono text-brand">{{ att.godzina }}</td>
+                                <td class="p-4 md:p-5">
+                                    {% if att.typ_mszy == 'inna' %}
+                                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1 rounded-lg text-xs font-bold">Inna: {{ att.nazwa_inna }}</span>
+                                    {% else %}
+                                        <span class="bg-brand/10 text-brand-400 border border-brand/20 px-3 py-1 rounded-lg text-xs font-bold uppercase">{{ att.typ_mszy }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="p-4 md:p-5">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button type="button" 
+                                                data-id="{{ att.id }}"
+                                                data-date="{{ att.data_sluzby }}"
+                                                data-time="{{ att.godzina }}"
+                                                data-type="{{ att.typ_mszy }}"
+                                                data-inna="{{ att.nazwa_inna or '' }}"
+                                                onclick="openAdminEditModal(this.dataset.id, this.dataset.date, this.dataset.time, this.dataset.type, this.dataset.inna)"
+                                                class="bg-brand/20 hover:bg-brand text-white text-xs font-bold px-3 py-2 rounded-xl transition">
+                                            ✏️ Edytuj
+                                        </button>
+                                        <form action="{{ url_for('delete_attendance', id=att.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno bezpowrotnie skasować ten rekord obecności?')">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="bg-danger/10 hover:bg-danger/20 text-danger p-2 rounded-xl transition duration-300 text-xs font-bold">
+                                                🗑️ Usuń
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
         <!-- SEKCJA RANKING -->
@@ -385,6 +428,7 @@
                     <span class="p-1.5 bg-brand/10 text-brand rounded-lg">➕</span> Dodaj Przydział Stałego Dyżuru
                 </h3>
                 <form action="{{ url_for('add_schedule') }}" method="POST" onsubmit="return validatePlanMultiSelect()" class="flex flex-col gap-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
                         <div class="lg:col-span-4 flex flex-col gap-1.5">
                             <label class="text-xs font-bold uppercase text-gray-400">Dzień Tygodnia</label>
@@ -448,9 +492,10 @@
                                                     <strong class="text-white font-bold text-sm truncate">{{ m.user.username }}</strong>
                                                     <span class="text-[11px] text-gray-400 font-medium truncate">({{ m.user.imie }} {{ m.user.nazwisko }})</span>
                                                 </div>
-                                                <a href="{{ url_for('delete_schedule', id=m.id) }}" 
-                                                   class="text-gray-500 hover:text-red-400 hover:bg-red-500/10 w-7 h-7 flex items-center justify-center rounded-lg text-lg font-bold transition-all shrink-0 ml-2" 
-                                                   onclick="return confirm('Czy na pewno chcesz usunąć ten stały dyżur?')">&times;</a>
+                                                <form action="{{ url_for('delete_schedule', id=m.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno chcesz usunąć ten stały dyżur?')">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="text-gray-500 hover:text-red-400 hover:bg-red-500/10 w-7 h-7 flex items-center justify-center rounded-lg text-lg font-bold transition-all shrink-0 ml-2">&times;</button>
+                                                </form>
                                             </li>
                                         {% endfor %}
                                     </ul>
@@ -475,6 +520,7 @@
                     <p class="text-gray-400 text-xs mb-6">Wpisz komunikat, który pojawi się natychmiast na tablicach wszystkich ministrantów.</p>
                     
                     <form action="/admin/add_announcement" method="POST" class="flex flex-col gap-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="flex flex-col gap-1.5">
                             <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Tytuł Komunikatu:</label>
                             <input type="text" name="tytul" required placeholder="np. Zbiórka przed Bożym Ciałem" class="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-brand transition">
@@ -504,12 +550,15 @@
                             <div class="flex justify-between items-center pt-4 mt-6 border-t border-white/5">
                                 <span class="text-xs text-brand font-semibold">Emitowano przez: Szef</span>
                                 <div class="flex gap-2">
-                                    <button onclick="openEditOgModal('{{ og.id }}', '{{ og.tresc|e }}')" class="text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-xl transition">
+                                    <button type="button" data-id="{{ og.id }}" data-tresc="{{ og.tresc }}" onclick="openEditOgModal(this.dataset.id, this.dataset.tresc)" class="text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-xl transition">
                                         ✏️ Edytuj
                                     </button>
-                                    <a href="{{ url_for('delete_announcement', id=og.id) }}" class="text-xs font-bold bg-danger/10 hover:bg-danger/20 text-danger px-3 py-1.5 rounded-xl transition" onclick="return confirm('Usunąć to ogłoszenie bezpowrotnie?')">
-                                        🗑️ Skasuj
-                                    </a>
+                                    <form action="{{ url_for('delete_announcement', id=og.id) }}" method="POST" class="inline" onsubmit="return confirm('Usunąć to ogłoszenie bezpowrotnie?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="text-xs font-bold bg-danger/10 hover:bg-danger/20 text-danger px-3 py-1.5 rounded-xl transition">
+                                            🗑️ Skasuj
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -566,128 +615,214 @@
                 </div>
             </div>
 
-            <form id="bulk-user-form" action="{{ url_for('delete_bulk_users') }}" method="POST">
-                <div class="glass-card rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-white/5 border-b border-white/5 text-gray-300 font-bold text-xs uppercase tracking-wider">
-                                    <th class="p-5 w-12 text-center">
-                                        <input type="checkbox" id="select-all-users" onchange="toggleAllUsers(this)" class="w-4 h-4 rounded accent-brand cursor-pointer" title="Zaznacz wszystkich">
-                                    </th>
-                                    <th class="p-5">Użytkownik</th>
-                                    <th class="p-5">Login / Rola</th>
-                                    <th class="p-5">IP Rejestracji</th>
-                                    <th class="p-5">Geolokacja</th>
-                                    <th class="p-5 text-center">Hasło</th> 
-                                    <th class="p-5 text-center">Zatwierdzony</th>
-                                    <th class="p-5 text-center">Akcje</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody" class="divide-y divide-white/5 text-sm">
-                                {% for u in users %}
-                                <tr class="user-table-row hover:bg-white/5 transition duration-200" data-username="{{ u.username|lower }}" data-imie="{{ u.imie|lower }}" data-nazwisko="{{ u.nazwisko|lower }}">
-                                    <td class="p-5 text-center">
-                                        {% if u.username != session.get('username') and u.role != 'admin' %}
-                                            <input type="checkbox" name="user_ids" value="{{ u.id }}" onchange="updateUserSelectionCount()" class="user-checkbox w-4 h-4 rounded accent-brand cursor-pointer">
+            <form id="bulk-user-form" action="{{ url_for('delete_bulk_users') }}" method="POST" class="hidden">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            </form>
+
+            <div class="glass-card rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/5 border-b border-white/5 text-gray-300 font-bold text-xs uppercase tracking-wider">
+                                <th class="p-5 w-12 text-center">
+                                    <input type="checkbox" id="select-all-users" onchange="toggleAllUsers(this)" class="w-4 h-4 rounded accent-brand cursor-pointer" title="Zaznacz wszystkich">
+                                </th>
+                                <th class="p-5">Użytkownik</th>
+                                <th class="p-5">Login / Rola</th>
+                                <th class="p-5">IP Rejestracji</th>
+                                <th class="p-5">Geolokacja</th>
+                                <th class="p-5 text-center">Hasło</th> 
+                                <th class="p-5 text-center">Zatwierdzony</th>
+                                <th class="p-5 text-center">Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-white/5 text-sm">
+                            {% for u in users %}
+                            <tr class="user-table-row hover:bg-white/5 transition duration-200" data-username="{{ u.username|lower }}" data-imie="{{ u.imie|lower }}" data-nazwisko="{{ u.nazwisko|lower }}">
+                                <td class="p-5 text-center">
+                                    {% if u.username != session.get('username') and u.role != 'admin' %}
+                                        <input type="checkbox" form="bulk-user-form" name="user_ids" value="{{ u.id }}" onchange="updateUserSelectionCount()" class="user-checkbox w-4 h-4 rounded accent-brand cursor-pointer">
+                                    {% else %}
+                                        <span class="text-xs text-gray-500 font-mono" title="Konto administratora / bieżąca sesja">🔒</span>
+                                    {% endif %}
+                                </td>
+                                <td class="p-5">
+                                    <div class="font-black text-white text-base">{{ u.imie }} {{ u.nazwisko }}</div>
+                                    <div class="text-xs text-gray-400 mt-0.5">Utworzono: {{ u.created_at|datetimeformat if u.created_at else 'Brak danych' }}</div>
+                                </td>
+                                <td class="p-5">
+                                    <div class="font-mono text-brand font-bold">@{{ u.username }}</div>
+                                    <div class="mt-1">
+                                        {% if u.role == 'admin' %}
+                                            <div class="flex flex-wrap gap-1">
+                                                <span class="bg-danger/10 text-danger border border-danger/20 text-[10px] uppercase font-black px-2 py-0.5 rounded-md">Szef (Admin)</span>
+                                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md" title="Posiada również normalne konto użytkownika (logowanie bez GPS i bez kodu Telegram)">+ Konto Normalne</span>
+                                            </div>
+                                        {% elif u.role == 'ksiadz' or u.role == 'ksiądz' %}
+                                            <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] uppercase font-black px-2 py-0.5 rounded-md">Ksiądz</span>
                                         {% else %}
-                                            <span class="text-xs text-gray-500 font-mono" title="Konto administratora / bieżąca sesja">🔒</span>
+                                            <span class="bg-white/5 text-gray-300 border border-white/5 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md">Ministrant</span>
                                         {% endif %}
-                                    </td>
-                                    <td class="p-5">
-                                        <div class="font-black text-white text-base">{{ u.imie }} {{ u.nazwisko }}</div>
-                                        <div class="text-xs text-gray-400 mt-0.5">Utworzono: {{ u.created_at|datetimeformat if u.created_at else 'Brak danych' }}</div>
-                                    </td>
-                                    <td class="p-5">
-                                        <div class="font-mono text-brand font-bold">@{{ u.username }}</div>
-                                        <div class="mt-1">
-                                            {% if u.role == 'admin' %}
-                                                <div class="flex flex-wrap gap-1">
-                                                    <span class="bg-danger/10 text-danger border border-danger/20 text-[10px] uppercase font-black px-2 py-0.5 rounded-md">Szef (Admin)</span>
-                                                    <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md" title="Posiada również normalne konto użytkownika (logowanie bez GPS i bez kodu Telegram)">+ Konto Normalne</span>
-                                                </div>
-                                            {% elif u.role == 'ksiadz' or u.role == 'ksiądz' %}
-                                                <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] uppercase font-black px-2 py-0.5 rounded-md">Ksiądz</span>
-                                            {% else %}
-                                                <span class="bg-white/5 text-gray-300 border border-white/5 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md">Ministrant</span>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                    <td class="p-5 font-mono text-xs text-gray-400">
-                                        {{ u.registration_ip or 'Brak logu IP' }}
-                                    </td>
-                                    <td class="p-5 font-mono text-xs text-gray-400">
-                                        {% if u.latitude and u.longitude %}
-                                            <span class="text-success font-bold flex items-center gap-1">🛰️ GPS Aktywny</span>
-                                            <a href="https://www.google.com/maps/search/?api=1&query={{ u.latitude|trim }},{{ u.longitude|trim }}" 
-                                               target="_blank" 
-                                               class="text-brand hover:underline font-bold text-[11px] mt-1 inline-flex items-center gap-1"
-                                               title="Otwórz lokalizację w Google Maps">
-                                                🗺️ Pokaż na mapie
-                                            </a>
-                                        {% else %}
-                                            <span class="text-gray-500 italic">Brak współrzędnych</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="p-5 text-center text-gray-400 text-xs font-mono max-w-[160px] truncate" title="{{ u.password }}">
-                                        {{ u.password }}
-                                    </td>
-                                    <td class="p-5 text-center">
-                                        {% if u.is_approved %}
-                                            <span class="bg-success/10 text-success border border-success/20 text-xs font-bold px-3 py-1 rounded-full">✓ Tak</span>
-                                        {% else %}
-                                            <span class="bg-warning/10 text-warning border border-warning/20 text-xs font-bold px-3 py-1 rounded-full animate-pulse">⏳ Oczekuje</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="p-5">
-                                        <div class="flex justify-center items-center gap-2">
-                                            {% if not u.is_approved %}
-                                            <a href="{{ url_for('approve_user', user_id=u.id) }}" class="bg-success/20 hover:bg-success/30 text-success px-3 py-1.5 rounded-xl font-bold text-xs transition">
-                                                Zatwierdź
-                                            </a>
-                                            {% endif %}
-                                            <a href="{{ url_for('toggle_uproszczony', id=u.id) }}" class="bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-xl font-bold text-xs transition">
-                                                Tryb: {{ 'Uproszczony' if u.uproszczony else 'Pełny' }}
-                                            </a>
-                                            {% if u.username != session.get('username') and u.role != 'admin' %}
-                                            <a href="{{ url_for('delete_user', id=u.id) }}" class="bg-danger/10 hover:bg-danger/20 text-danger px-3 py-1.5 rounded-xl font-bold text-xs transition" onclick="return confirm('Czy bezpowrotnie usunąć konto użytkownika {{ u.username }}?')">
-                                                Usuń
-                                            </a>
-                                            {% endif %}
-                                            <button type="button" 
-                                                    onclick="openEditUserModal(this)"
-                                                    class="bg-brand/20 hover:bg-brand/30 text-purple-400 px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1"
-                                                    data-id="{{ u.id }}"
-                                                    data-imie="{{ u.imie }}"
-                                                    data-nazwisko="{{ u.nazwisko }}"
-                                                    data-username="{{ u.username }}"
-                                                    data-role="{{ u.role }}"
-                                                    data-approved="{{ 'true' if u.is_approved else 'false' }}"
-                                                    data-uproszczony="{{ 'true' if u.uproszczony else 'false' }}"
-                                                    data-ip="{{ u.registration_ip or 'Brak' }}"
-                                                    data-lat="{{ u.latitude or '' }}"
-                                                    data-lng="{{ u.longitude or '' }}">
-                                                ✏️ Edytuj
+                                    </div>
+                                </td>
+                                <td class="p-5 font-mono text-xs text-gray-400">
+                                    {{ u.registration_ip or 'Brak logu IP' }}
+                                </td>
+                                <td class="p-5 font-mono text-xs text-gray-400">
+                                    {% if u.latitude and u.longitude %}
+                                        <span class="text-success font-bold flex items-center gap-1">🛰️ GPS Aktywny</span>
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ u.latitude|trim }},{{ u.longitude|trim }}" 
+                                           target="_blank" 
+                                           class="text-brand hover:underline font-bold text-[11px] mt-1 inline-flex items-center gap-1"
+                                           title="Otwórz lokalizację w Google Maps">
+                                            🗺️ Pokaż na mapie
+                                        </a>
+                                    {% else %}
+                                        <span class="text-gray-500 italic">Brak współrzędnych</span>
+                                    {% endif %}
+                                </td>
+                                <td class="p-5 text-center text-gray-200 text-xs font-mono whitespace-nowrap">
+                                    {% if u.role == 'admin' %}
+                                        <span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold">[Zaszyfrowane PBKDF2]</span>
+                                    {% else %}
+                                        <div class="inline-flex items-center gap-1.5 bg-black/30 border border-white/10 px-3 py-1.5 rounded-xl">
+                                            <span class="select-all font-bold text-white">{{ u.password }}</span>
+                                            <button type="button" data-password="{{ u.password }}" onclick="copyUserPassword(this.dataset.password, this)" class="text-gray-400 hover:text-brand transition text-xs ml-1" title="Kopiuj hasło">
+                                                📋
                                             </button>
                                         </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                    {% endif %}
+                                </td>
+                                <td class="p-5 text-center">
+                                    {% if u.is_approved %}
+                                        <span class="bg-success/10 text-success border border-success/20 text-xs font-bold px-3 py-1 rounded-full">✓ Tak</span>
+                                    {% else %}
+                                        <span class="bg-warning/10 text-warning border border-warning/20 text-xs font-bold px-3 py-1 rounded-full animate-pulse">⏳ Oczekuje</span>
+                                    {% endif %}
+                                </td>
+                                <td class="p-5">
+                                    <div class="flex justify-center items-center gap-2 flex-wrap">
+                                        {% if not u.is_approved %}
+                                        <form action="{{ url_for('approve_user', user_id=u.id) }}" method="POST" class="inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="bg-success/20 hover:bg-success/30 text-success px-3 py-1.5 rounded-xl font-bold text-xs transition">
+                                                Zatwierdź
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        <form action="{{ url_for('toggle_uproszczony', id=u.id) }}" method="POST" class="inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-xl font-bold text-xs transition">
+                                                Tryb: {{ 'Uproszczony' if u.uproszczony else 'Pełny' }}
+                                            </button>
+                                        </form>
+                                        {% if u.username != session.get('username') and u.role != 'admin' %}
+                                        <form action="{{ url_for('delete_user', id=u.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy bezpowrotnie usunąć konto użytkownika {{ u.username }}?')">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="bg-danger/10 hover:bg-danger/20 text-danger px-3 py-1.5 rounded-xl font-bold text-xs transition">
+                                                Usuń
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        <button type="button" 
+                                                onclick="openEditUserModal(this)"
+                                                class="bg-brand/20 hover:bg-brand/30 text-purple-400 px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1"
+                                                data-id="{{ u.id }}"
+                                                data-imie="{{ u.imie }}"
+                                                data-nazwisko="{{ u.nazwisko }}"
+                                                data-username="{{ u.username }}"
+                                                data-password="{{ u.password if u.role != 'admin' else '' }}"
+                                                data-role="{{ u.role }}"
+                                                data-approved="{{ 'true' if u.is_approved else 'false' }}"
+                                                data-uproszczony="{{ 'true' if u.uproszczony else 'false' }}"
+                                                data-ip="{{ u.registration_ip or 'Brak' }}"
+                                                data-lat="{{ u.latitude or '' }}"
+                                                data-lng="{{ u.longitude or '' }}">
+                                            ✏️ Edytuj
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            </form>
+            </div>
         </section>
 
         <!-- SEKCJA USTAWIENIA -->
         <section id="section-ustawienia" class="admin-section hidden animate-section">
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">Ustawienia Rdzenia</h1>
-                <p class="text-gray-400 text-sm mt-1">Konfiguracja zmiennych systemowych, bazy danych oraz parametrów bezpieczeństwa sieciowego.</p>
+                <p class="text-gray-400 text-sm mt-1">Konfiguracja zmiennych systemowych, okna zgłaszania służb, eksportu na Dysk Google oraz dziennika zdarzeń bezpieczeństwa (AuditLog).</p>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- KARTA: OKNO CZASOWE ZGŁASZANIA SŁUŻB ORAZ EKSPORT NA DYSK GOOGLE -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-black text-white mb-2 flex items-center gap-2">
+                            <span>⏳</span> Okno czasowe zgłaszania służb
+                        </h3>
+                        <p class="text-xs text-gray-400 mb-5 leading-relaxed">
+                            Ustaw maksymalną liczbę dni wstecz, do których ministranci mogą samodzielnie dopisywać obecność na służbie w panelu użytkownika.
+                        </p>
+                        <form action="{{ url_for('update_attendance_window') }}" method="POST" class="space-y-4">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" onclick="setDaysBackPreset(0, this)" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand shadow-brand-glow' if attendance_days_back == 0 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">Tylko dziś (0)</button>
+                                <button type="button" onclick="setDaysBackPreset(3, this)" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand shadow-brand-glow' if attendance_days_back == 3 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">3 dni</button>
+                                <button type="button" onclick="setDaysBackPreset(7, this)" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand shadow-brand-glow' if attendance_days_back == 7 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">7 dni</button>
+                                <button type="button" onclick="setDaysBackPreset(14, this)" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand shadow-brand-glow' if attendance_days_back == 14 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">14 dni</button>
+                                <button type="button" onclick="setDaysBackPreset(30, this)" class="px-3.5 py-2 rounded-xl text-xs font-bold border transition {{ 'bg-brand text-white border-brand shadow-brand-glow' if attendance_days_back == 30 else 'bg-white/5 text-gray-300 border-white/10 hover:bg-white/10' }}">30 dni</button>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    <label class="block text-[11px] font-bold uppercase text-gray-400 mb-1">Własna liczba dni wstecz (0–365):</label>
+                                    <input type="number" name="days_back" id="ustawienia_days_back_input" value="{{ attendance_days_back|default(3) }}" min="0" max="365" required
+                                        class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono font-bold focus:outline-none focus:border-brand">
+                                </div>
+                                <button type="submit" class="mt-5 bg-brand hover:bg-brand/90 text-white font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-brand-glow shrink-0">
+                                    💾 Zapisz w bazie
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/5 text-xs text-gray-400 flex justify-between">
+                        <span>Aktywny limit w bazie:</span>
+                        <span class="font-mono text-brand font-bold">{{ attendance_days_back|default(3) }} dni wstecz</span>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-black text-white mb-2 flex items-center gap-2">
+                            <span>☁️</span> Automatyczny Eksport Służb na Dysk Google
+                        </h3>
+                        <p class="text-xs text-gray-400 mb-4 leading-relaxed">
+                            Harmonogram APScheduler uruchamia się codziennie o <strong>23:50 (Europe/Warsaw)</strong> i w ostatnim dniu miesiąca automatycznie wysyła raport <code>.xlsx</code> na Dysk Google oraz powiadomienie na Telegram.
+                        </p>
+                        <div class="space-y-2 text-xs mb-5">
+                            <div class="flex justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                                <span class="text-gray-400">Harmonogram APScheduler:</span>
+                                <span class="text-success font-mono font-bold">Aktywny (23:50 Europe/Warsaw)</span>
+                            </div>
+                            <div class="flex justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
+                                <span class="text-gray-400">Ostatni wyeksportowany miesiąc:</span>
+                                <span class="text-white font-mono font-bold">{{ last_drive_export_month|default('Brak') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <form action="{{ url_for('export_drive_now') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="w-full bg-gradient-to-r from-sky-500 to-brand hover:opacity-95 text-white font-black py-3.5 px-6 rounded-xl text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
+                            <span>🚀</span> Przetestuj / Wyślij Eksport na Dysk Google Teraz
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <div class="glass-card rounded-3xl p-6 border border-white/5">
                     <h3 class="text-lg font-black text-white mb-4 flex items-center gap-2">
                         <span>🔒</span> Bezpieczeństwo i Sesje
@@ -699,15 +834,15 @@
                         </div>
                         <div class="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
                             <span class="text-gray-400">Weryfikacja dwuetapowa (2FA):</span>
-                            <span class="text-success font-bold">Włączona (Wymagany token mail/SMS)</span>
+                            <span class="text-success font-bold">Włączona (GPS + Kod Telegram)</span>
                         </div>
                         <div class="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                            <span class="text-gray-400">Szyfrowanie haseł użytkowników:</span>
-                            <span class="font-mono text-purple-400 font-bold">Werkzeug PBKDF2-SHA256</span>
+                            <span class="text-gray-400">Polityka haseł:</span>
+                            <span class="font-mono text-purple-400 font-bold">Admin: PBKDF2-SHA256 | User: Jawne</span>
                         </div>
                         <div class="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                            <span class="text-gray-400">Algorytm poolingu bazy danych:</span>
-                            <span class="font-mono text-white font-bold">pool_pre_ping=True (280s recycle)</span>
+                            <span class="text-gray-400">Ochrona Brute-Force i CSRF:</span>
+                            <span class="font-mono text-emerald-400 font-bold">Flask-Limiter + CSRFProtect (Aktywne)</span>
                         </div>
                     </div>
                 </div>
@@ -727,6 +862,62 @@
                     <div class="mt-6 pt-4 border-t border-white/5 text-xs text-gray-500">
                         Aby zmienić parametry produkcyjne rdzenia, zmodyfikuj zmienne środowiskowe bezpośrednio w panelu administracyjnym platformy **Render.com**.
                     </div>
+                </div>
+            </div>
+
+            <!-- DZIENNIK ZDARZEŃ BEZPIECZEŃSTWA (AUDIT LOG - OSTATNIE 50 WPISÓW) -->
+            <div class="glass-card rounded-3xl p-6 border border-white/5 shadow-2xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+                    <div>
+                        <h3 class="text-xl font-black text-white flex items-center gap-2">
+                            <span>🛡️</span> Dziennik Zdarzeń Bezpieczeństwa (AuditLog)
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-1">Ostatnie 50 zarejestrowanych operacji autoryzacyjnych, administracyjnych i eksportowych.</p>
+                    </div>
+                    <span class="bg-brand/20 text-brand border border-brand/30 px-3 py-1 rounded-xl text-xs font-mono font-bold">
+                        Wpisów: {{ audit_logs|length if audit_logs is defined else 0 }} / 50
+                    </span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-white/5 border-b border-white/10 text-gray-300 font-bold uppercase tracking-wider">
+                                <th class="p-3.5">ID</th>
+                                <th class="p-3.5">Kod Zdarzenia</th>
+                                <th class="p-3.5">Użytkownik</th>
+                                <th class="p-3.5">Adres IP</th>
+                                <th class="p-3.5">Szczegóły</th>
+                                <th class="p-3.5 text-right">Data i Czas</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5 font-mono">
+                            {% if audit_logs is defined and audit_logs %}
+                                {% for log in audit_logs %}
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="p-3.5 text-gray-500">#{{ log.id }}</td>
+                                    <td class="p-3.5">
+                                        <span class="px-2.5 py-1 rounded-lg font-bold text-[11px]
+                                            {% if log.event_code == 'LOG_AUTH_02' %}bg-danger/15 text-danger border border-danger/30
+                                            {% elif log.event_code == 'LOG_AUTH_01' %}bg-success/15 text-success border border-success/30
+                                            {% elif log.event_code == 'LOG_DRIVE_EXPORT' %}bg-sky-500/15 text-sky-400 border border-sky-500/30
+                                            {% elif log.event_code == 'LOG_2FA_01' or log.event_code == 'LOG_PWD_RESET' %}bg-warning/15 text-warning border border-warning/30
+                                            {% else %}bg-brand/15 text-purple-300 border border-brand/30{% endif %}">
+                                            {{ log.event_code }}
+                                        </span>
+                                    </td>
+                                    <td class="p-3.5 text-white font-bold">{{ log.username or '—' }}</td>
+                                    <td class="p-3.5 text-gray-400">{{ log.ip_address or '—' }}</td>
+                                    <td class="p-3.5 text-gray-300 font-sans">{{ log.details or '' }}</td>
+                                    <td class="p-3.5 text-right text-gray-400 whitespace-nowrap">{{ log.created_at|datetimeformat('%Y-%m-%d %H:%M:%S') if log.created_at else '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="p-6 text-center text-gray-500 font-sans italic">Brak zarejestrowanych zdarzeń w dzienniku AuditLog.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -756,15 +947,18 @@
                                 <td class="p-4">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'Brak danych' }}</td>
                                 <td class="p-4 font-mono text-xs text-gray-400">{{ user.registration_ip or 'Brak IP' }}</td>
                                 <td class="p-4 text-right space-x-2">
-                                    <a href="{{ url_for('approve_user', user_id=user.id) }}" 
-                                    class="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                                        Zatwierdź
-                                    </a>
-                                    <a href="{{ url_for('reject_user', user_id=user.id) }}" 
-                                    class="bg-danger/20 hover:bg-danger text-danger hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-danger/30"
-                                    onclick="return confirm('Czy na pewno chcesz odrzucić i usunąć konto użytkownika {{ user.username }}?')">
-                                        Odrzuć
-                                    </a>
+                                    <form action="{{ url_for('approve_user', user_id=user.id) }}" method="POST" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                                            Zatwierdź
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('reject_user', user_id=user.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno chcesz odrzucić i usunąć konto użytkownika {{ user.username }}?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="bg-danger/20 hover:bg-danger text-danger hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-danger/30">
+                                            Odrzuć
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             {% else %}
@@ -789,6 +983,7 @@
             <button onclick="closeModal('adminEditModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition">&times;</button>
         </div>
         <form id="adminEditForm" method="POST" class="flex flex-col gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Data Służby:</label>
                 <input type="date" name="data_sluzby" id="adminEditDate" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand">
@@ -834,6 +1029,7 @@
         </div>
 
         <form id="addAttendanceForm" action="{{ url_for('add_attendance_admin') }}" method="POST" onsubmit="return validateAttendanceMultiSelect()" class="flex flex-col gap-4 min-h-0 flex-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="batches_json" id="attendanceBatchesJson">
             <datalist id="commonHoursList">
                 <option value="06:30"></option>
@@ -896,6 +1092,7 @@
             <button type="button" onclick="closeModal('dayScheduleModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition">&times;</button>
         </div>
         <form action="{{ url_for('add_schedule') }}" method="POST" onsubmit="return validateDayScheduleMultiSelect()" class="flex flex-col gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="dzien" id="dayScheduleInputDzien">
             
             <div class="flex flex-col gap-1.5">
@@ -929,6 +1126,7 @@
             <button type="button" onclick="closeEditUserModal()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
         </div>
         <form id="editUserForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="space-y-4 text-left">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -947,8 +1145,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1.5">Nowe hasło (opcjonalnie)</label>
-                    <input type="text" id="edit_u_password" name="password" placeholder="Pozostaw puste, aby nie zmieniać hasła..." class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-brand focus:outline-none font-mono">
+                    <label class="block text-xs font-bold uppercase text-gray-400 mb-1.5">Hasło użytkownika (jawne dla ministrantów / księży)</label>
+                    <input type="text" id="edit_u_password" name="password" placeholder="Wpisz hasło (dla admina pozostaw puste, aby nie zmieniać)..." class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-brand focus:outline-none font-mono">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1009,6 +1207,7 @@
             <button onclick="closeModal('editOgModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition">&times;</button>
         </div>
         <form id="editOgForm" method="POST" class="flex flex-col gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="og_id" id="edit_og_id">
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Nowa Treść Ogłoszenia:</label>
@@ -1107,9 +1306,37 @@
     }
 
     function openEditOgModal(id, tresc) {
+        document.getElementById('editOgForm').action = "/admin/edit_announcement/" + id;
         document.getElementById('edit_og_id').value = id;
         document.getElementById('edit_og_tresc').value = tresc;
         openModal('editOgModal');
+    }
+
+    function setDaysBackPreset(days, btn) {
+        const form = btn ? btn.closest('form') : null;
+        if (form) {
+            const input = form.querySelector('input[name="days_back"]');
+            if (input) input.value = days;
+            form.submit();
+        } else {
+            const i1 = document.getElementById('sluzby_days_back_input');
+            const i2 = document.getElementById('ustawienia_days_back_input');
+            if (i1) i1.value = days;
+            if (i2) i2.value = days;
+        }
+    }
+
+    function copyUserPassword(pwd, btn) {
+        if (!pwd) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(pwd).then(() => {
+                if (btn) {
+                    const orig = btn.innerText;
+                    btn.innerText = '✅';
+                    setTimeout(() => { btn.innerText = orig; }, 1200);
+                }
+            });
+        }
     }
 
     function filterUser(username, btnElement) {
@@ -1192,15 +1419,19 @@
     // MASOWE OPERACJE (BULK DELETE) - UŻYTKOWNICY
     // ==========================================
     function toggleAllUsers(masterCb) {
-        const checkboxes = document.querySelectorAll('.user-checkbox');
-        checkboxes.forEach(cb => {
-            cb.checked = masterCb.checked;
+        const rows = document.querySelectorAll('.user-table-row');
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cb = row.querySelector('.user-checkbox');
+                if (cb) cb.checked = masterCb.checked;
+            }
         });
         updateUserSelectionCount();
     }
 
     function toggleSelectAllUsersBtn() {
-        const checkboxes = Array.from(document.querySelectorAll('.user-checkbox'));
+        const visibleRows = Array.from(document.querySelectorAll('.user-table-row')).filter(r => r.style.display !== 'none');
+        const checkboxes = visibleRows.map(r => r.querySelector('.user-checkbox')).filter(Boolean);
         const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
         checkboxes.forEach(cb => cb.checked = !allChecked);
         const masterCb = document.getElementById('select-all-users');
@@ -1209,7 +1440,8 @@
     }
 
     function updateUserSelectionCount() {
-        const checkboxes = Array.from(document.querySelectorAll('.user-checkbox'));
+        const visibleRows = Array.from(document.querySelectorAll('.user-table-row')).filter(r => r.style.display !== 'none');
+        const visibleCbs = visibleRows.map(r => r.querySelector('.user-checkbox')).filter(Boolean);
         const checkedCbs = document.querySelectorAll('.user-checkbox:checked');
         
         const countSpan = document.getElementById('selected-user-count');
@@ -1218,11 +1450,12 @@
         const masterCb = document.getElementById('select-all-users');
         const btnText = document.getElementById('select-all-users-btn-text');
         
-        if (masterCb && checkboxes.length > 0) {
-            masterCb.checked = checkedCbs.length === checkboxes.length;
-            masterCb.indeterminate = checkedCbs.length > 0 && checkedCbs.length < checkboxes.length;
+        if (masterCb && visibleCbs.length > 0) {
+            const checkedVisible = visibleCbs.filter(cb => cb.checked).length;
+            masterCb.checked = checkedVisible === visibleCbs.length;
+            masterCb.indeterminate = checkedVisible > 0 && checkedVisible < visibleCbs.length;
             if (btnText) {
-                btnText.innerText = (checkedCbs.length === checkboxes.length && checkboxes.length > 0) ? "Odznacz wszystkich" : "Zaznacz wszystkich";
+                btnText.innerText = (checkedVisible === visibleCbs.length && visibleCbs.length > 0) ? "Odznacz wszystkich" : "Zaznacz wszystkich";
             }
         }
     }
@@ -1334,6 +1567,7 @@
         const ip = btn.dataset.ip;
         const lat = btn.dataset.lat;
         const lng = btn.dataset.lng;
+        const password = btn.dataset.password || "";
 
         document.getElementById('editUserForm').action = "/admin/edit_user/" + id;
         document.getElementById('edit_u_imie').value = imie;
@@ -1344,7 +1578,7 @@
         document.getElementById('edit_u_uproszczony').value = uproszczony;
         document.getElementById('edit_u_ip').value = ip;
         const passField = document.getElementById('edit_u_password');
-        if (passField) passField.value = "";
+        if (passField) passField.value = password;
 
         const gpsInput = document.getElementById('edit_u_gps');
         const gpsBtn = document.getElementById('edit_u_gps_btn');
@@ -2157,7 +2391,7 @@
         
         // Obsługa aktywnej zakładki (w tym obsługa kotwicy #weryfikacja)
         const hashTab = window.location.hash ? window.location.hash.substring(1) : null;
-        const validTabs = ['dashboard', 'uzytkownicy', 'sluzby', 'ranking', 'plan', 'ogloszenia', 'weryfikacja'];
+        const validTabs = ['dashboard', 'uzytkownicy', 'sluzby', 'ranking', 'plan', 'ogloszenia', 'weryfikacja', 'ustawienia'];
         const savedTab = (hashTab && validTabs.includes(hashTab)) 
             ? hashTab 
             : (localStorage.getItem('activeAdminTab') || 'dashboard');

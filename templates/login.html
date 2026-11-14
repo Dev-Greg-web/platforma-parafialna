@@ -69,6 +69,7 @@
 
         <!-- Formularz Główny -->
         <form id="login-form" action="{{ url_for('auth_process') }}" method="post" class="p-8 flex flex-col gap-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
             <!-- Ukryte pola geolokalizacyjne i trybu logowania -->
             <input type="hidden" id="login_geo_lat" name="geo_lat">
@@ -271,6 +272,7 @@
         <div id="reset-error-msg" class="hidden bg-red-500/10 border border-red-500/30 rounded-2xl p-3 mb-4 text-xs text-red-500 font-medium"></div>
 
         <form id="admin-reset-form" action="{{ url_for('reset_admin_password') }}" method="POST" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" id="reset_geo_lat" name="geo_lat">
             <input type="hidden" id="reset_geo_lng" name="geo_lng">
 

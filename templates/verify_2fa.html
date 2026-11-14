@@ -49,6 +49,7 @@
         {% endif %}
 
         <form action="{{ url_for('two_factor_page') }}" method="post" class="flex flex-col gap-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="flex flex-col gap-2">
                 <label class="text-xs font-bold text-gray-600 dark:text-gray-400 tracking-wide uppercase text-center">
                     Kod autoryzacyjny (Format: xxx-xxx-xxx-xxx)

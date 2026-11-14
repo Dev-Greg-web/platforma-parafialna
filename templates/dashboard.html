@@ -90,10 +90,11 @@
             </h2>
             
             <form action="{{ url_for('dashboard_page') }}" method="POST" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Data służby:</label>
-                        <input type="date" name="data_sluzby" required 
+                        <input type="date" name="data_sluzby" required min="{{ min_attendance_date }}" max="{{ max_attendance_date }}" value="{{ max_attendance_date }}"
                             class="p-3.5 bg-slate-900/60 border border-white/10 text-white rounded-xl outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 transition font-medium text-sm">
                     </div>
                     
@@ -129,6 +130,14 @@
                     class="w-full mt-2 p-4 bg-brand hover:bg-brand/90 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-brand/20 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
                     🚀 Zapisz moją obecność
                 </button>
+                <div class="p-3 rounded-xl bg-brand/10 border border-brand/20 text-xs text-gray-300 text-center">
+                    ℹ️ Aktualne okno zgłaszania służb:
+                    {% if attendance_days_back == 0 %}
+                        <strong class="text-white">tylko dzisiaj (0 dni wstecz)</strong>
+                    {% else %}
+                        do <strong class="text-white">{{ attendance_days_back }} dni wstecz</strong> (od <span class="font-mono">{{ min_attendance_date }}</span> do <span class="font-mono">{{ max_attendance_date }}</span>)
+                    {% endif %}
+                </div>
             </form>
         </div>
 
@@ -171,11 +180,12 @@
                                     <button onclick="openMyEditModal(`{{ att.id }}`, `{{ att.data_sluzby.strftime('%Y-%m-%d') }}`, `{{ att.godzina }}`, `{{ att.typ_mszy }}`, `{{ att.nazwa_inna or '' }}`)" class="p-2 bg-brand/10 text-brand hover:bg-brand/20 rounded-xl transition duration-200 text-sm font-bold px-3">
                                         ✏️ Edytuj
                                     </button>
-                                    <a href="{{ url_for('delete_my_attendance', id=att.id) }}" 
-                                        onclick="return confirm('Czy na pewno chcesz usunąć tę służbę?')"
-                                        class="p-2 bg-danger/10 text-danger hover:bg-danger/20 rounded-xl transition duration-200 text-sm font-bold px-3">
-                                        🗑️ Usuń
-                                    </a>
+                                    <form action="{{ url_for('delete_my_attendance', id=att.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno chcesz usunąć tę służbę?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="p-2 bg-danger/10 text-danger hover:bg-danger/20 rounded-xl transition duration-200 text-sm font-bold px-3">
+                                            🗑️ Usuń
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -296,10 +306,11 @@
             <button type="button" onclick="closeMyEditModal()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
         </div>
         <form id="editMyAttendanceForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-400 mb-1.5">Data Służby</label>
-                    <input type="date" id="myEditDate" name="data_sluzby" required class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand">
+                    <input type="date" id="myEditDate" name="data_sluzby" min="{{ min_attendance_date }}" max="{{ max_attendance_date }}" required class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-400 mb-1.5">Godzina</label>

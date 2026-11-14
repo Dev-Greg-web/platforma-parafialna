@@ -24,6 +24,10 @@ class Users(db.Model):
     two_factor_expiry = db.Column(db.DateTime, nullable=True)
     is_approved = db.Column(db.Boolean, default=False)
 
+    # Ochrona przed Brute-Force
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+
 class Attendance(db.Model):
     __tablename__ = "attendance"
     id = db.Column(db.Integer, primary_key=True)
@@ -59,3 +63,37 @@ class PasswordResetRequest(db.Model):
     ip_address = db.Column(db.String(255)) 
     status = db.Column(db.String(20), default='PENDING')
     proposed_password = db.Column(db.String(255), nullable=True)
+
+class SystemSettings(db.Model):
+    __tablename__ = "system_settings"
+    key = db.Column(db.String(50), primary_key=True)
+    value = db.Column(db.String(255), nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+class AuditLog(db.Model):
+    __tablename__ = "audit_log"
+    id = db.Column(db.Integer, primary_key=True)
+    event_code = db.Column(db.String(50), nullable=False, index=True)
+    username = db.Column(db.String(50), nullable=True)
+    ip_address = db.Column(db.String(255), nullable=True)
+    details = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now, index=True)
+
+def get_setting(key, default=None):
+    try:
+        item = db.session.get(SystemSettings, key)
+        if item is not None:
+            return item.value
+    except Exception:
+        pass
+    return str(default) if default is not None else None
+
+def set_setting(key, value):
+    item = db.session.get(SystemSettings, key)
+    if item is None:
+        item = SystemSettings(key=key, value=str(value))
+        db.session.add(item)
+    else:
+        item.value = str(value)
+    db.session.commit()
+    return item
