@@ -1935,26 +1935,47 @@ def generate_attendances_excel_bytes(year=None, month=None):
     return output, filename
 
 def upload_excel_to_google_drive(file_bytes, filename):
+    oauth_client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+    oauth_client_secret = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
+    oauth_refresh_token = os.getenv("GOOGLE_OAUTH_REFRESH_TOKEN")
     raw_sa_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
     folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
 
-    if not raw_sa_json:
-        raise RuntimeError("Brak zmiennej środowiskowej GOOGLE_SERVICE_ACCOUNT_JSON z kluczem konta usługi Google.")
+    if oauth_client_id and oauth_client_secret and oauth_refresh_token:
+        from google.oauth2.credentials import Credentials as OAuthCredentials
+        from google.auth.transport.requests import Request as GoogleAuthRequest
 
-    if os.path.isfile(raw_sa_json):
-        with open(raw_sa_json, "r", encoding="utf-8") as f:
-            service_account_info = json.load(f)
+        credentials = OAuthCredentials(
+            token=None,
+            refresh_token=oauth_refresh_token.strip(),
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=oauth_client_id.strip(),
+            client_secret=oauth_client_secret.strip(),
+            scopes=["https://www.googleapis.com/auth/drive.file"]
+        )
+        credentials.refresh(GoogleAuthRequest())
+    elif raw_sa_json:
+        if os.path.isfile(raw_sa_json):
+            with open(raw_sa_json, "r", encoding="utf-8") as f:
+                service_account_info = json.load(f)
+        else:
+            service_account_info = json.loads(raw_sa_json)
+
+        scopes = [
+            "https://www.googleapis.com/auth/drive.file",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        credentials = service_account.Credentials.from_service_account_info(
+            service_account_info,
+            scopes=scopes
+        )
     else:
-        service_account_info = json.loads(raw_sa_json)
+        raise RuntimeError(
+            "Brak konfiguracji Google Drive: ustaw GOOGLE_OAUTH_CLIENT_ID, "
+            "GOOGLE_OAUTH_CLIENT_SECRET i GOOGLE_OAUTH_REFRESH_TOKEN (dla zwykłego Gmaila) "
+            "lub GOOGLE_SERVICE_ACCOUNT_JSON (dla Dysku współdzielonego)."
+        )
 
-    scopes = [
-        "https://www.googleapis.com/auth/drive.file",
-        "https://www.googleapis.com/auth/drive"
-    ]
-    credentials = service_account.Credentials.from_service_account_info(
-        service_account_info,
-        scopes=scopes
-    )
     drive_service = build("drive", "v3", credentials=credentials)
 
     file_metadata = {
