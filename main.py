@@ -2217,6 +2217,9 @@ def generate_audit_logs_excel_bytes(logs=None):
     body_font = Font(name="Calibri", size=10, color="0F172A")
 
     event_counts = defaultdict(int)
+    col_max_lens = {idx: len(h) for idx, h in enumerate(headers, start=1)}
+    row_texts = []
+
     for lp_idx, item in enumerate(logs, start=1):
         row_num = lp_idx + 1
         code = item.event_code or "LOG_SYSTEM"
@@ -2226,32 +2229,53 @@ def generate_audit_logs_excel_bytes(logs=None):
         event_counts[code] += 1
         row_fill = PatternFill(start_color=fill_hex, end_color=fill_hex, fill_type="solid")
         ts_str = item.created_at.strftime("%Y-%m-%d %H:%M:%S") if item.created_at else ""
+        ip_str = item.ip_address or "-"
+        details_str = item.details or ""
 
-        ws.append([
+        row_vals = [
             lp_idx,
             item.id,
             ts_str,
             code,
             category_label,
             item.username or "-",
-            item.ip_address or "-",
-            item.details or ""
-        ])
-        ws.row_dimensions[row_num].height = 20
+            ip_str,
+            details_str
+        ]
+        ws.append(row_vals)
+        row_texts.append((row_num, ip_str, details_str))
 
-        for col_num in range(1, len(headers) + 1):
+        for col_num, val in enumerate(row_vals, start=1):
+            col_max_lens[col_num] = max(col_max_lens[col_num], len(str(val)))
             c = ws.cell(row=row_num, column=col_num)
             c.border = thin_border
             c.fill = row_fill
             c.font = code_font if col_num in (2, 4, 7) else body_font
-            c.alignment = align_center if col_num in (1, 2, 3, 4, 7) else align_left_wrap
+            c.alignment = align_center if col_num in (1, 2, 3, 4) else align_left_wrap
 
     if logs:
         ws.auto_filter.ref = f"A1:H{len(logs) + 1}"
 
-    fixed_widths = {1: 7, 2: 10, 3: 21, 4: 20, 5: 29, 6: 18, 7: 24, 8: 60}
-    for col_idx, width in fixed_widths.items():
+    col_widths = {
+        1: max(col_max_lens[1] + 3, 7),
+        2: max(col_max_lens[2] + 3, 10),
+        3: max(col_max_lens[3] + 3, 21),
+        4: max(col_max_lens[4] + 4, 21),
+        5: max(col_max_lens[5] + 4, 30),
+        6: min(max(col_max_lens[6] + 4, 18), 28),
+        7: min(max(col_max_lens[7] + 4, 24), 52),
+        8: min(max(col_max_lens[8] + 4, 48), 75),
+    }
+    for col_idx, width in col_widths.items():
         ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    # Dynamiczna wysokość wiersza, aby zawinięty tekst w Adres IP / Szczegółach nigdy nie był ucięty
+    eff_w7 = max(col_widths[7] - 3, 20)
+    eff_w8 = max(col_widths[8] - 3, 40)
+    for row_num, ip_str, details_str in row_texts:
+        lines_7 = sum(max(1, (len(p) + eff_w7 - 1) // eff_w7) for p in (ip_str.splitlines() or [""]))
+        lines_8 = sum(max(1, (len(p) + eff_w8 - 1) // eff_w8) for p in (details_str.splitlines() or [""]))
+        ws.row_dimensions[row_num].height = max(22, max(lines_7, lines_8) * 15 + 6)
 
     # Arkusz 2: Podsumowanie i Statystyki
     ws_summary = wb.create_sheet(title="Podsumowanie")
