@@ -30,7 +30,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import urllib.request
 import json
-from threading import Thread
+from threading import Thread, Lock
 import requests
 from sqlalchemy.orm import joinedload
 from collections import defaultdict
@@ -116,6 +116,43 @@ def get_client_ip():
         return request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
     return request.remote_addr or "127.0.0.1"
 
+_AUDIT_EXPORT_LOCK = Lock()
+AUDIT_LOG_AUTO_EXPORT_LIMIT = 50
+
+_AUDIT_EVENT_CATEGORY_STYLES = {
+    "LOG_AUTH_01": ("Logowanie / Autoryzacja (Sukces)", "ECFDF5"),
+    "LOG_AUTH_02": ("Odmowa / Błąd Autoryzacji", "FEF2F2"),
+    "LOG_2FA_01": ("Weryfikacja 2FA", "FFFBEB"),
+    "LOG_PWD_RESET": ("Reset Hasła", "FFFBEB"),
+    "LOG_REG_01": ("Rejestracja Konta", "F5F3FF"),
+    "LOG_DRIVE_EXPORT": ("Eksport Google Drive", "F0F9FF"),
+    "LOG_ADMIN_ACTION": ("Akcja Administracyjna", "F8FAFC"),
+}
+
+
+def _extract_drive_folder_id(raw_val):
+    """Wyciąga czyste ID folderu Google Drive z podanego ID lub pełnego linku."""
+    val = (raw_val or "").strip()
+    if not val:
+        return ""
+    m_folder = re.search(r"/folders/([a-zA-Z0-9_-]+)", val)
+    if m_folder:
+        return m_folder.group(1)
+    m_id = re.search(r"[?&]id=([a-zA-Z0-9_-]+)", val)
+    if m_id:
+        return m_id.group(1)
+    return val.split("?")[0].strip()
+
+
+def get_audit_logs_drive_folder_id():
+    """Zwraca docelowe ID folderu Google Drive dla archiwum AuditLog."""
+    return (
+        _extract_drive_folder_id(get_setting("audit_logs_drive_folder_id", ""))
+        or _extract_drive_folder_id(os.getenv("GOOGLE_DRIVE_LOGS_FOLDER_ID", ""))
+        or _extract_drive_folder_id(os.getenv("GOOGLE_DRIVE_FOLDER_ID", ""))
+    )
+
+
 def log_audit_event(event_code, username=None, ip_address=None, details=None):
     try:
         if username is None:
@@ -140,6 +177,25 @@ def log_audit_event(event_code, username=None, ip_address=None, details=None):
     except Exception as e:
         db.session.rollback()
         print(f"Błąd zapisu AuditLog ({event_code}): {e}")
+        return
+
+    # Automatyczny eksport po osiągnięciu pełnego bufora 50 / 50 logów
+    try:
+        if AuditLog.query.count() >= AUDIT_LOG_AUTO_EXPORT_LIMIT and _AUDIT_EXPORT_LOCK.acquire(blocking=False):
+            try:
+                if AuditLog.query.count() >= AUDIT_LOG_AUTO_EXPORT_LIMIT:
+                    export_audit_logs_batch_to_drive(clear_exported=True, trigger_label="AUTO_50")
+            except Exception as export_err:
+                try:
+                    db.session.rollback()
+                    set_setting("last_audit_drive_export_error", str(export_err)[:250])
+                except Exception:
+                    pass
+                print(f"Ostrzeżenie automatycznego eksportu AuditLog (50/50): {export_err}")
+            finally:
+                _AUDIT_EXPORT_LOCK.release()
+    except Exception as lock_err:
+        print(f"Błąd sprawdzania limitu AuditLog: {lock_err}")
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
@@ -1549,9 +1605,16 @@ def admin_page():
     unapproved_count = len(unapproved_users)
     approved_users = Users.query.filter_by(is_approved=True).order_by(Users.nazwisko, Users.imie).all()
     all_users = Users.query.order_by(Users.created_at.desc()).all()
-    audit_logs = AuditLog.query.order_by(AuditLog.created_at.desc(), AuditLog.id.desc()).limit(50).all()
+    audit_logs_total_count = AuditLog.query.count()
+    audit_logs = AuditLog.query.order_by(AuditLog.created_at.desc(), AuditLog.id.desc()).limit(AUDIT_LOG_AUTO_EXPORT_LIMIT).all()
     attendance_days_back = get_attendance_days_back()
     last_drive_export_month = get_setting('last_drive_export_month', 'Brak')
+    audit_logs_drive_folder_id = (
+        _extract_drive_folder_id(get_setting('audit_logs_drive_folder_id', ''))
+        or _extract_drive_folder_id(os.getenv('GOOGLE_DRIVE_LOGS_FOLDER_ID', ''))
+    )
+    last_audit_drive_export = get_setting('last_audit_drive_export', 'Brak')
+    last_audit_drive_export_error = get_setting('last_audit_drive_export_error', '')
     
     return render_template(
         "admin.html", 
@@ -1570,6 +1633,11 @@ def admin_page():
         dyzury_count=len(wszystkie_dyzury),
         user=aktualny_uzytkownik.username if aktualny_uzytkownik else session.get('username', 'Admin'),
         audit_logs=audit_logs,
+        audit_logs_total_count=audit_logs_total_count,
+        audit_logs_limit=AUDIT_LOG_AUTO_EXPORT_LIMIT,
+        audit_logs_drive_folder_id=audit_logs_drive_folder_id,
+        last_audit_drive_export=last_audit_drive_export,
+        last_audit_drive_export_error=last_audit_drive_export_error,
         attendance_days_back=attendance_days_back,
         last_drive_export_month=last_drive_export_month
     )
@@ -2095,12 +2163,165 @@ def generate_attendances_excel_bytes(year=None, month=None):
     output.seek(0)
     return output, filename
 
-def upload_excel_to_google_drive(file_bytes, filename):
+def _style_excel_header(ws, headers, fill_hex="5E3BEE"):
+    """Zapisuje i formatuje nagłówek arkusza Excel."""
+    header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color=fill_hex, end_color=fill_hex, fill_type="solid")
+    align_center = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1'),
+        top=Side(style='thin', color='CBD5E1'),
+        bottom=Side(style='thin', color='CBD5E1')
+    )
+    ws.append(headers)
+    ws.row_dimensions[1].height = 24
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = align_center
+        cell.border = thin_border
+    return thin_border
+
+
+def generate_audit_logs_excel_bytes(logs=None):
+    """Generuje sformatowany skoroszyt .xlsx dla dziennika AuditLog (wpisy + podsumowanie)."""
+    if logs is None:
+        logs = AuditLog.query.order_by(AuditLog.created_at.asc(), AuditLog.id.asc()).all()
+
+    now_pl = get_poland_now()
+    filename = f"AuditLog_Archiwum_{now_pl.strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Dziennik AuditLog"
+    ws.views.sheetView[0].showGridLines = True
+    ws.freeze_panes = "A2"
+
+    headers = [
+        "Lp.",
+        "ID Logu",
+        "Data i Czas",
+        "Kod Zdarzenia",
+        "Kategoria",
+        "Użytkownik",
+        "Adres IP",
+        "Szczegóły Zdarzenia"
+    ]
+    thin_border = _style_excel_header(ws, headers)
+
+    align_center = Alignment(horizontal="center", vertical="center")
+    align_left_wrap = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    code_font = Font(name="Consolas", size=10, bold=True, color="1E293B")
+    body_font = Font(name="Calibri", size=10, color="0F172A")
+
+    event_counts = defaultdict(int)
+    for lp_idx, item in enumerate(logs, start=1):
+        row_num = lp_idx + 1
+        code = item.event_code or "LOG_SYSTEM"
+        category_label, fill_hex = _AUDIT_EVENT_CATEGORY_STYLES.get(
+            code, ("Zdarzenie Systemowe", "F8FAFC")
+        )
+        event_counts[code] += 1
+        row_fill = PatternFill(start_color=fill_hex, end_color=fill_hex, fill_type="solid")
+        ts_str = item.created_at.strftime("%Y-%m-%d %H:%M:%S") if item.created_at else ""
+
+        ws.append([
+            lp_idx,
+            item.id,
+            ts_str,
+            code,
+            category_label,
+            item.username or "-",
+            item.ip_address or "-",
+            item.details or ""
+        ])
+        ws.row_dimensions[row_num].height = 20
+
+        for col_num in range(1, len(headers) + 1):
+            c = ws.cell(row=row_num, column=col_num)
+            c.border = thin_border
+            c.fill = row_fill
+            c.font = code_font if col_num in (2, 4, 7) else body_font
+            c.alignment = align_center if col_num in (1, 2, 3, 4, 7) else align_left_wrap
+
+    if logs:
+        ws.auto_filter.ref = f"A1:H{len(logs) + 1}"
+
+    fixed_widths = {1: 7, 2: 10, 3: 21, 4: 20, 5: 29, 6: 18, 7: 24, 8: 60}
+    for col_idx, width in fixed_widths.items():
+        ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+    # Arkusz 2: Podsumowanie i Statystyki
+    ws_summary = wb.create_sheet(title="Podsumowanie")
+    ws_summary.views.sheetView[0].showGridLines = True
+    ws_summary.freeze_panes = "A2"
+    sum_headers = ["Parametr / Kod Zdarzenia", "Wartość / Kategoria", "Liczba Zdarzeń", "Udział %"]
+    _style_excel_header(ws_summary, sum_headers)
+
+    first_ts = logs[0].created_at.strftime("%Y-%m-%d %H:%M:%S") if logs and logs[0].created_at else "-"
+    last_ts = logs[-1].created_at.strftime("%Y-%m-%d %H:%M:%S") if logs and logs[-1].created_at else "-"
+    total_logs = len(logs)
+
+    meta_rows = [
+        ("Wygenerowano", now_pl.strftime("%Y-%m-%d %H:%M:%S Europe/Warsaw"), "", ""),
+        ("Liczba wpisów w paczce", f"{total_logs} / {AUDIT_LOG_AUTO_EXPORT_LIMIT}", total_logs, "100.0%"),
+        ("Zakres czasowy", f"{first_ts}  ->  {last_ts}", "", ""),
+    ]
+    for m_idx, m_row in enumerate(meta_rows, start=2):
+        ws_summary.append(list(m_row))
+        for col_num in range(1, 5):
+            c = ws_summary.cell(row=m_idx, column=col_num)
+            c.border = thin_border
+            c.font = Font(name="Calibri", size=10, bold=(col_num == 1), color="0F172A")
+            c.fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+            c.alignment = align_center if col_num in (3, 4) else align_left_wrap
+
+    chart_start_row = len(meta_rows) + 3
+    ws_summary.cell(row=chart_start_row - 1, column=1, value="").border = thin_border
+    stat_row = chart_start_row
+    for code, count in sorted(event_counts.items(), key=lambda kv: (-kv[1], kv[0])):
+        cat_label, fill_hex = _AUDIT_EVENT_CATEGORY_STYLES.get(code, ("Zdarzenie Systemowe", "F8FAFC"))
+        pct = f"{(count / total_logs * 100):.1f}%" if total_logs > 0 else "0.0%"
+        ws_summary.cell(row=stat_row, column=1, value=code)
+        ws_summary.cell(row=stat_row, column=2, value=cat_label)
+        ws_summary.cell(row=stat_row, column=3, value=count)
+        ws_summary.cell(row=stat_row, column=4, value=pct)
+        row_fill = PatternFill(start_color=fill_hex, end_color=fill_hex, fill_type="solid")
+        for col_num in range(1, 5):
+            c = ws_summary.cell(row=stat_row, column=col_num)
+            c.border = thin_border
+            c.fill = row_fill
+            c.font = code_font if col_num == 1 else body_font
+            c.alignment = align_center if col_num in (1, 3, 4) else align_left_wrap
+        stat_row += 1
+
+    if event_counts:
+        pie = PieChart()
+        pie.title = "Struktura Zdarzeń AuditLog"
+        labels = Reference(ws_summary, min_col=1, min_row=chart_start_row, max_row=stat_row - 1)
+        data = Reference(ws_summary, min_col=3, min_row=chart_start_row, max_row=stat_row - 1)
+        pie.add_data(data, titles_from_data=False)
+        pie.set_categories(labels)
+        ws_summary.add_chart(pie, "F2")
+
+    sum_widths = {1: 28, 2: 34, 3: 18, 4: 14}
+    for col_idx, width in sum_widths.items():
+        ws_summary.column_dimensions[get_column_letter(col_idx)].width = width
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output, filename
+
+
+def upload_excel_to_google_drive(file_bytes, filename, folder_id=None):
     oauth_client_id = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
     oauth_client_secret = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
     oauth_refresh_token = os.getenv("GOOGLE_OAUTH_REFRESH_TOKEN")
     raw_sa_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-    folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+    target_folder_id = _extract_drive_folder_id(folder_id) or _extract_drive_folder_id(os.getenv("GOOGLE_DRIVE_FOLDER_ID"))
 
     if oauth_client_id and oauth_client_secret and oauth_refresh_token:
         from google.oauth2.credentials import Credentials as OAuthCredentials
@@ -2143,8 +2364,8 @@ def upload_excel_to_google_drive(file_bytes, filename):
         "name": filename,
         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     }
-    if folder_id and folder_id.strip():
-        file_metadata["parents"] = [folder_id.strip()]
+    if target_folder_id:
+        file_metadata["parents"] = [target_folder_id]
 
     if isinstance(file_bytes, io.BytesIO):
         file_bytes.seek(0)
@@ -2166,6 +2387,104 @@ def upload_excel_to_google_drive(file_bytes, filename):
     ).execute()
 
     return uploaded
+
+
+def export_audit_logs_batch_to_drive(logs_batch=None, clear_exported=True, trigger_label="AUTO_50"):
+    """Eksportuje paczkę logów AuditLog do sformatowanego .xlsx i wysyła do folderu logów na Google Drive."""
+    if logs_batch is None:
+        query = AuditLog.query.order_by(AuditLog.created_at.asc(), AuditLog.id.asc())
+        if trigger_label == "AUTO_50":
+            query = query.limit(AUDIT_LOG_AUTO_EXPORT_LIMIT)
+        logs_batch = query.all()
+
+    if not logs_batch:
+        return None, None, 0
+
+    excel_bytes, filename = generate_audit_logs_excel_bytes(logs_batch)
+    target_folder_id = get_audit_logs_drive_folder_id()
+    uploaded = upload_excel_to_google_drive(excel_bytes, filename, folder_id=target_folder_id)
+    file_id = uploaded.get("id", "N/A") if isinstance(uploaded, dict) else "N/A"
+    exported_ids = [item.id for item in logs_batch if item.id is not None]
+
+    if clear_exported and exported_ids:
+        AuditLog.query.filter(AuditLog.id.in_(exported_ids)).delete(synchronize_session=False)
+        db.session.commit()
+
+    now_label = get_poland_now().strftime("%Y-%m-%d %H:%M:%S")
+    set_setting("last_audit_drive_export", f"{now_label} | {filename} (ID: {file_id})"[:250])
+    set_setting("last_audit_drive_export_error", "")
+
+    folder_note = target_folder_id if target_folder_id else "Domyślny folder główny Drive"
+    Thread(
+        target=send_telegram_alert,
+        args=[(
+            f"[DRIVE] *EKSPORT LOGÓW AUDITLOG ({len(exported_ids)}/{AUDIT_LOG_AUTO_EXPORT_LIMIT})*\n\n"
+            f"Tryb: `{trigger_label}`\n"
+            f"Plik: `{filename}`\n"
+            f"Folder ID: `{folder_note}`\n"
+            f"Drive ID: `{file_id}`"
+        )]
+    ).start()
+
+    return uploaded, filename, len(exported_ids)
+
+
+@app.route('/admin/update_audit_logs_folder', methods=['POST'])
+@admin_required
+def update_audit_logs_folder():
+    raw_folder = request.form.get('audit_logs_drive_folder_id', '')
+    clean_id = _extract_drive_folder_id(raw_folder)
+    set_setting('audit_logs_drive_folder_id', clean_id[:250])
+    log_audit_event(
+        "LOG_ADMIN_ACTION",
+        details=f"Zaktualizowano dedykowany folder Google Drive dla AuditLog: {clean_id or 'brak (fallback na domyślny)'}"
+    )
+    if clean_id:
+        flash(f"Zapisano ID folderu Google Drive dla logów: {clean_id}", "success")
+    else:
+        flash("Wyczyszczono indywidualny folder logów — system użyje GOOGLE_DRIVE_LOGS_FOLDER_ID lub domyślnego folderu.", "info")
+    return redirect(url_for('admin_page') + '#ustawienia')
+
+
+@app.route('/admin/export_audit_logs')
+@admin_required
+def export_audit_logs():
+    output, filename = generate_audit_logs_excel_bytes()
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename
+    )
+
+
+@app.route('/admin/export_audit_logs_drive_now', methods=['POST'])
+@admin_required
+def export_audit_logs_drive_now():
+    total_now = AuditLog.query.count()
+    if total_now == 0:
+        flash("Dziennik AuditLog jest obecnie pusty — brak logów do wysłania.", "warning")
+        return redirect(url_for('admin_page') + '#ustawienia')
+
+    clear_after = request.form.get('clear_after_export') == '1'
+    try:
+        with _AUDIT_EXPORT_LOCK:
+            uploaded, filename, exported_count = export_audit_logs_batch_to_drive(
+                clear_exported=clear_after,
+                trigger_label="MANUAL"
+            )
+        file_id = uploaded.get("id", "N/A") if isinstance(uploaded, dict) else "N/A"
+        status_note = " i wyczyszczono bufor w bazie" if clear_after else ""
+        flash(
+            f"Pomyślnie wyeksportowano {exported_count} logów ({filename}, ID: {file_id}) na Dysk Google{status_note}!",
+            "success"
+        )
+    except Exception as e:
+        db.session.rollback()
+        set_setting("last_audit_drive_export_error", str(e)[:250])
+        flash(f"Błąd wysyłki logów AuditLog na Dysk Google: {e}", "danger")
+
+    return redirect(url_for('admin_page') + '#ustawienia')
 
 def get_poland_now():
     return datetime.now(ZoneInfo("Europe/Warsaw"))
