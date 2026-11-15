@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory, send_file, abort
+from markupsafe import Markup, escape
 from models import (
     Users, Attendance, Announcement, Schedule, db,
     PasswordResetRequest, SystemSettings, AuditLog,
@@ -39,6 +40,41 @@ import re
 load_dotenv()
 
 app = Flask(__name__)
+
+_SVG_ICON_CACHE = {}
+
+def _load_raw_svg_icon(name):
+    """Wczytuje zawartość pliku .svg z static/icons/ (z pamięcią podręczną)."""
+    if not name or not re.fullmatch(r"[a-z0-9-]+", name):
+        return ""
+    if name not in _SVG_ICON_CACHE:
+        icon_path = os.path.join(app.root_path, "static", "icons", f"{name}.svg")
+        if os.path.isfile(icon_path):
+            with open(icon_path, "r", encoding="utf-8") as f:
+                _SVG_ICON_CACHE[name] = f.read().strip()
+        else:
+            _SVG_ICON_CACHE[name] = ""
+    return _SVG_ICON_CACHE[name]
+
+def render_svg_icon(name, cls="w-4 h-4 shrink-0 inline-block"):
+    """Renderuje bezpiecznie ikonę SVG z static/icons/ z podanymi klasami CSS."""
+    raw = _load_raw_svg_icon(name)
+    if not raw:
+        return Markup("")
+    safe_cls = escape(cls)
+    return Markup(raw.replace("<svg ", f'<svg class="{safe_cls}" aria-hidden="true" ', 1))
+
+def get_svg_icon_map(names=None):
+    """Zwraca mapę nazwa -> surowe źródło SVG do użycia w JavaScript."""
+    icons_dir = os.path.join(app.root_path, "static", "icons")
+    if names is None and os.path.isdir(icons_dir):
+        names = [f[:-4] for f in sorted(os.listdir(icons_dir)) if f.endswith(".svg")]
+    return {n: _load_raw_svg_icon(n) for n in (names or []) if _load_raw_svg_icon(n)}
+
+app.jinja_env.globals["render_svg_icon"] = render_svg_icon
+app.jinja_env.globals["svg_icon"] = render_svg_icon
+app.jinja_env.globals["get_svg_icon_map"] = get_svg_icon_map
+
 app.secret_key = os.getenv("TAJNE_HASLO") or secrets.token_hex(32)
 db_url = os.getenv("DATABASE_URL", "sqlite:///ministranci.db")
 
@@ -219,19 +255,19 @@ def parse_user_agent(ua_string):
     ua = ua_string.lower()
     
     if "android" in ua:
-        os_info = "📱 Telefon/Tablet Android"
+        os_info = "Telefon/Tablet Android"
     elif "iphone" in ua:
-        os_info = "📱 Apple iPhone (iOS)"
+        os_info = "Apple iPhone (iOS)"
     elif "ipad" in ua or "ipod" in ua:
-        os_info = "📱 Apple iPad (iOS)"
+        os_info = "Apple iPad (iOS)"
     elif "windows" in ua:
-        os_info = "💻 Komputer Windows PC"
+        os_info = "Komputer Windows PC"
     elif "macintosh" in ua or "mac os" in ua:
-        os_info = "💻 Komputer Mac (macOS)"
+        os_info = "Komputer Mac (macOS)"
     elif "linux" in ua:
-        os_info = "💻 Komputer Linux"
+        os_info = "Komputer Linux"
     else:
-        os_info = "❓ Nieznany system/urządzenie"
+        os_info = "Nieznany system/urządzenie"
         
     if "edg" in ua:
         browser = "Microsoft Edge"
@@ -363,12 +399,12 @@ def telegram_webhook():
     # 1. Próba ustawienia nowego hasła z wartością (np. /ustaw_haslo MojeHaslo123)
     if text.startswith("/ustaw_haslo "):
         if not pending_request:
-            send_telegram_alert("❌ Brak aktywnej prośby o zmianę hasła lub czas na odpowiedź (5 min) wygasł! Wywołaj najpierw reset na stronie.")
+            send_telegram_alert("[BŁĄD] Brak aktywnej prośby o zmianę hasła lub czas na odpowiedź (5 min) wygasł! Wywołaj najpierw reset na stronie.")
             return "OK", 200
 
         nowe_haslo = text.replace("/ustaw_haslo ", "").strip()
         if len(nowe_haslo) < 4:
-            send_telegram_alert("⚠️ Hasło jest za krótkie! Wyślij ponownie w formacie:\n`/ustaw_haslo MojeBezpieczneHaslo123`")
+            send_telegram_alert("[UWAGA] Hasło jest za krótkie! Wyślij ponownie w formacie:\n`/ustaw_haslo MojeBezpieczneHaslo123`")
             return "OK", 200
 
         # Zapisujemy nowe shashowane hasło w bazie danych
@@ -384,14 +420,14 @@ def telegram_webhook():
             ip_address=pending_request.ip_address,
             details="Hasło administratora zostało zmienione poprzez autoryzację Telegram."
         )
-        send_telegram_alert(f"✅ *SUKCES!* Hasło dla konta `{admin.username}` zostało pomyślnie zmienione w bazie danych (zaszyfrowane PBKDF2-SHA256)!")
+        send_telegram_alert(f"[OK] *SUKCES!* Hasło dla konta `{admin.username}` zostało pomyślnie zmienione w bazie danych (zaszyfrowane PBKDF2-SHA256)!")
 
     # 2. Samo "ustaw hasło" / "/ustaw_haslo" (poinstruowanie użytkownika)
     elif text_clean in ["ustaw hasło", "ustaw haslo", "ustaw_haslo", "/ustaw_haslo"]:
         if pending_request:
-            send_telegram_alert("🔑 Aby ustawić nowe hasło, dopisz je po spacji w poleceniu, np.:\n\n`/ustaw_haslo MojeTajneHaslo123`")
+            send_telegram_alert("[KLUCZ] Aby ustawić nowe hasło, dopisz je po spacji w poleceniu, np.:\n\n`/ustaw_haslo MojeTajneHaslo123`")
         else:
-            send_telegram_alert("ℹ️ Brak aktywnej prośby o reset. Aby zmienić hasło, kliknij najpierw przycisk 'Wyślij Hasło' na stronie logowania.")
+            send_telegram_alert("[INFO] Brak aktywnej prośby o reset. Aby zmienić hasło, kliknij najpierw przycisk 'Wyślij Hasło' na stronie logowania.")
 
     # 3. Odrzucenie prośby (obsługuje: /odrzuc, /odrzuć, odrzuc, odrzuć, odrzut)
     elif text_clean in ["/odrzuc", "/odrzuć", "odrzuc", "odrzuć", "odrzut"]:
@@ -404,9 +440,9 @@ def telegram_webhook():
                 ip_address=pending_request.ip_address,
                 details="Prośba o reset hasła administratora została odrzucona przez Telegram."
             )
-            send_telegram_alert("🚫 *PROŚBA ODRZUCONA!* Próba zmiany hasła została pomyślnie anulowana.")
+            send_telegram_alert("[ODRZUCONO] *PROŚBA ODRZUCONA!* Próba zmiany hasła została pomyślnie anulowana.")
         else:
-            send_telegram_alert("ℹ️ Brak aktywnych żądań resetu hasła do odrzucenia.")
+            send_telegram_alert("[INFO] Brak aktywnych żądań resetu hasła do odrzucenia.")
 
     return "OK", 200
 
@@ -473,7 +509,8 @@ def auth_process():
                     password=hashed_admin_pass, 
                     role='admin', 
                     uproszczony=False,
-                    is_approved=True
+                    is_approved=True,
+                    verification_status='APPROVED'
                 )
                 db.session.add(admin_in_db)
                 db.session.commit()
@@ -513,11 +550,11 @@ def auth_process():
                         details=f"Blokada konta na 15 minut po {user.failed_login_attempts} nieudanych próbach logowania"
                     )
                     lock_alert = (
-                        f"🚨 *ALERT BRUTE-FORCE: ZABLOKOWANO KONTO!*\n\n"
+                        f"[ALERT BRUTE-FORCE] *ZABLOKOWANO KONTO!*\n\n"
                         f"Konto `{username}` zostało zablokowane na 15 minut po {user.failed_login_attempts} nieudanych próbach logowania.\n"
-                        f"🌐 IP: {resolved_ip_str}\n"
-                        f"📱 Urządzenie: {device_info}\n"
-                        f"⏰ Czas: {data_str} {godzina_str}"
+                        f"IP: {resolved_ip_str}\n"
+                        f"Urządzenie: {device_info}\n"
+                        f"Czas: {data_str} {godzina_str}"
                     )
                     Thread(target=send_telegram_alert, args=[lock_alert]).start()
                     flash("Przekroczono limit 5 nieudanych prób logowania. Konto zostało zablokowane na 15 minut.", "danger")
@@ -572,25 +609,26 @@ def auth_process():
                     details="Odrzucono logowanie administratora - brak udostępnionej lokalizacji GPS"
                 )
                 alert_text = (
-                    f"⛔ ODRZUCENO PROBĘ LOGOWANIA ADMINA (BRAK GPS)!\n\n"
+                    f"[BLOKADA] ODRZUCONO PRÓBĘ LOGOWANIA ADMINA (BRAK GPS)!\n\n"
                     f"Wykryto PRAWIDŁOWE hasło do konta Admin ({username}), ale logowanie zostało ZABLOKOWANE ze względu na brak zgody na geolokalizację GPS!\n\n"
-                    f"📌 DANE POLĄCZENIA:\n"
-                    f"📅 Data: {data_str}\n"
-                    f"⏰ Godzina: {godzina_str}\n"
-                    f"🌐 Adres IP: {user_ip}\n"
-                    f"📍 Szacowane IP: {resolved_ip_str}\n"
-                    f"📱 Urządzenie: {device_info}\n"
+                    f"DANE POŁĄCZENIA:\n"
+                    f"Data: {data_str}\n"
+                    f"Godzina: {godzina_str}\n"
+                    f"Adres IP: {user_ip}\n"
+                    f"Szacowane IP: {resolved_ip_str}\n"
+                    f"Urządzenie: {device_info}\n"
                 )
                 thr = Thread(target=send_telegram_alert, args=[alert_text])
                 thr.start()
 
-                flash("⚠️ Logowanie na konto Administratora wymaga OBOWIĄZKOWEGO udostępnienia lokalizacji GPS z urządzenia! Włącz geolokalizację i spróbuj ponownie.", "danger")
+                flash("Logowanie na konto Administratora wymaga OBOWIĄZKOWEGO udostępnienia lokalizacji GPS z urządzenia! Włącz geolokalizację i spróbuj ponownie.", "danger")
                 return redirect(url_for('login_page', mode='admin'))
 
             user.registration_ip = resolved_ip_str
             user.latitude = str(browser_lat.strip())
             user.longitude = str(browser_lng.strip())
             user.is_approved = True
+            user.verification_status = 'APPROVED'
             
             bloki = ["".join([str(secrets.randbelow(10)) for _ in range(3)]) for _ in range(4)]
             kod_2fa = "-".join(bloki)
@@ -610,23 +648,23 @@ def auth_process():
 
             telegram_2fa_text = (
                 f"======================================\n"
-                f"🔐 SEKCJA 1: KOD WERYFIKACYJNY 2FA\n"
+                f"SEKCJA 1: KOD WERYFIKACYJNY 2FA\n"
                 f"======================================\n\n"
-                f"🔑 TWÓJ KOD DOSTĘPU: `{kod_2fa}`\n\n"
-                f"⏳ Kod wygaśnie za 5 minut.\n\n"
+                f"TWÓJ KOD DOSTĘPU: `{kod_2fa}`\n\n"
+                f"Kod wygaśnie za 5 minut.\n\n"
                 f"======================================\n"
-                f"📱 SEKCJA 2: DANE LOGUJĄCEGO SIĘ (DOWODY)\n"
+                f"SEKCJA 2: DANE LOGUJĄCEGO SIĘ (DOWODY)\n"
                 f"======================================\n\n"
-                f"👤 Konto: Administrator (@{username})\n"
-                f"📅 Data: {data_str}\n"
-                f"⏰ Godzina: {godzina_str}\n"
-                f"🌐 IP: {user_ip}\n"
-                f"🏙️ Sieć/IP Geolokalizacja: {resolved_ip_str}\n"
-                f"🛰️ Dokładne GPS Urządzenia: {browser_lat.strip()}, {browser_lng.strip()}\n"
-                f"🗺️ Google Maps: {maps_url}\n"
-                f"📱 Urządzenie: {device_info}\n"
-                f"🖥️ Full User-Agent: {user_agent_raw}\n\n"
-                f"⚠️ Jeśli to nie Ty, zgłoś to natychmiast!"
+                f"Konto: Administrator (@{username})\n"
+                f"Data: {data_str}\n"
+                f"Godzina: {godzina_str}\n"
+                f"IP: {user_ip}\n"
+                f"Sieć/IP Geolokalizacja: {resolved_ip_str}\n"
+                f"Dokładne GPS Urządzenia: {browser_lat.strip()}, {browser_lng.strip()}\n"
+                f"Google Maps: {maps_url}\n"
+                f"Urządzenie: {device_info}\n"
+                f"Full User-Agent: {user_agent_raw}\n\n"
+                f"UWAGA: Jeśli to nie Ty, zgłoś to natychmiast!"
             )
 
             try:
@@ -642,8 +680,18 @@ def auth_process():
 
         # Wariant 2: Logowanie na KONTO NORMALNE (również dla osób z rangą admina - bez wymogu GPS i bez kodu Telegram)
         else:
-            if hasattr(user, 'is_approved') and not user.is_approved and user.role != 'admin':
+            if not user.is_approved and user.role != 'admin':
                 db.session.commit()
+                if getattr(user, 'verification_status', None) == 'REJECTED' or user.rejection_reason:
+                    powod = (user.rejection_reason or "Brak podanego powodu.").strip()
+                    log_audit_event(
+                        "LOG_AUTH_02",
+                        username=username,
+                        ip_address=resolved_ip_str,
+                        details=f"Próba logowania na odrzucone konto (powód: {powod})"
+                    )
+                    flash(f"Twoje konto zostało odrzucone przez administratora. Powód odrzucenia: {powod}", "rejected")
+                    return redirect(url_for('login_page'))
                 log_audit_event(
                     "LOG_AUTH_02",
                     username=username,
@@ -691,15 +739,14 @@ def auth_process():
 
         user = Users.query.filter_by(username=username).first()
         if user or username == env_admin_name:
-            flash("Ta nazwa użytkownika jest już zajęta.", "danger")
+            if user and not user.is_approved and getattr(user, 'verification_status', None) == 'REJECTED':
+                flash("Ta nazwa użytkownika jest już zajęta (konto o tym loginie zostało wcześniej odrzucone).", "danger")
+            else:
+                flash("Ta nazwa użytkownika jest już zajęta.", "danger")
             return redirect(url_for('login_page'))
         else:
-            if has_gps:
-                final_lat = str(browser_lat.strip())
-                final_lng = str(browser_lng.strip())
-            else:
-                final_lat = ip_data["lat"]
-                final_lng = ip_data["lng"]
+            final_lat = str(browser_lat.strip()) if has_gps else None
+            final_lng = str(browser_lng.strip()) if has_gps else None
 
             # Jawne hasło dla zwykłych użytkowników (role='user')
             new_user = Users(
@@ -710,7 +757,11 @@ def auth_process():
                 role='user',
                 uproszczony=False,
                 is_approved=False,
+                verification_status='PENDING',
+                rejection_reason=None,
+                admin_message=None,
                 registration_ip=resolved_ip_str,
+                registration_device=device_info,
                 latitude=final_lat,
                 longitude=final_lng
             )
@@ -738,8 +789,16 @@ def _process_user_update(user_id):
 
     if new_role == 'admin':
         user.is_approved = True
+        user.verification_status = 'APPROVED'
+        user.rejection_reason = None
     elif 'is_approved' in request.form:
-        user.is_approved = str(request.form.get('is_approved')).strip().lower() in ('true', '1', 'on', 'yes')
+        approved_val = str(request.form.get('is_approved')).strip().lower() in ('true', '1', 'on', 'yes')
+        user.is_approved = approved_val
+        if approved_val:
+            user.verification_status = 'APPROVED'
+            user.rejection_reason = None
+        elif user.verification_status != 'REJECTED':
+            user.verification_status = 'PENDING'
 
     if 'uproszczony' in request.form:
         user.uproszczony = str(request.form.get('uproszczony')).strip().lower() in ('true', '1', 'on', 'yes')
@@ -830,6 +889,45 @@ def two_factor_page():
             
     return render_template('verify_2fa.html')
 
+def _approve_user_account(user):
+    uname = user.username
+    full_name = f"{user.imie} {user.nazwisko}"
+    admin_message = (request.form.get('admin_message') or '').strip()
+    role = (request.form.get('role') or '').strip()
+    uproszczony_raw = request.form.get('uproszczony')
+
+    user.is_approved = True
+    user.verification_status = 'APPROVED'
+    user.rejection_reason = None
+    if admin_message:
+        user.admin_message = admin_message
+    if role in ('user', 'ksiądz'):
+        user.role = role
+    if uproszczony_raw is not None:
+        user.uproszczony = str(uproszczony_raw).strip().lower() in ('true', '1', 'on', 'yes')
+
+    db.session.commit()
+    log_audit_event("LOG_ADMIN_ACTION", details=f"Zatwierdzono konto użytkownika @{uname}")
+    flash(f"Konto użytkownika {uname} ({full_name}) zostało pomyślnie zatwierdzone!", "success")
+
+
+def _reject_user_account(user):
+    uname = user.username
+    full_name = f"{user.imie} {user.nazwisko}"
+    rejection_reason = (request.form.get('rejection_reason') or request.form.get('powod_odrzucenia') or '').strip()
+    if not rejection_reason:
+        flash("Musisz podać powód odrzucenia konta!", "danger")
+        return False
+
+    user.is_approved = False
+    user.verification_status = 'REJECTED'
+    user.rejection_reason = rejection_reason
+    db.session.commit()
+    log_audit_event("LOG_ADMIN_ACTION", details=f"Odrzucono konto @{uname}. Powód: {rejection_reason}")
+    flash(f"Konto użytkownika {uname} ({full_name}) zostało odrzucone. Powód został zapisany i będzie widoczny dla użytkownika.", "warning")
+    return True
+
+
 @app.route('/admin/weryfikacja')
 @admin_required
 def panel_weryfikacji():
@@ -839,23 +937,11 @@ def panel_weryfikacji():
 @admin_required
 def przetworz_weryfikacje(user_id, akcja):
     uzytkownik = Users.query.get_or_404(user_id)
-    uname = uzytkownik.username
-    
-    if akcja == 'zatwierdz':
-        uzytkownik.is_approved = True
-        db.session.commit()
-        log_audit_event("LOG_ADMIN_ACTION", details=f"Zatwierdzono konto użytkownika @{uname}")
-        flash(f"Konto użytkownika {uname} zostało zatwierdzone.", "success")
+    if akcja in ('zatwierdz', 'akceptuj'):
+        _approve_user_account(uzytkownik)
     elif akcja == 'odrzuc':
-        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
-        Attendance.query.filter_by(user_id=user_id).delete()
-        Schedule.query.filter_by(user_id=user_id).delete()
-        db.session.delete(uzytkownik)
-        db.session.commit()
-        log_audit_event("LOG_ADMIN_ACTION", details=f"Odrzucono i usunięto konto użytkownika @{uname}")
-        flash(f"Rejestracja użytkownika {uname} została odrzucona.", "warning")
-        
-    return redirect(request.referrer or (url_for('admin_page') + '#weryfikacja'))
+        _reject_user_account(uzytkownik)
+    return redirect(url_for('admin_page') + '#weryfikacja')
 
 @app.route('/reset-admin-password', methods=['POST'])
 @limiter.limit("3 per 5 minutes")
@@ -883,7 +969,7 @@ def reset_admin_password():
             if roznica_czasu < timedelta(minutes=5):
                 sekundy_minely = int(roznica_czasu.total_seconds())
                 roznica = max(0, 300 - sekundy_minely)
-                flash(f"⚠️ Prośba o zmianę hasła została już wysłana! Odczekaj {roznica} sek. przed kolejną próbą.", "warning")
+                flash(f"Prośba o zmianę hasła została już wysłana! Odczekaj {roznica} sek. przed kolejną próbą.", "warning")
                 return redirect(url_for('login_page'))
 
         user_ip = get_client_ip()
@@ -906,20 +992,20 @@ def reset_admin_password():
                 details="Odrzucono prośbę o reset hasła administratora (brak współrzędnych GPS)"
             )
             alert_brak_gps = (
-                f"⛔ ODRZUCONO PROŚBĘ RESETU HASŁA (BRAK GPS)!\n\n"
+                f"[BLOKADA] ODRZUCONO PROŚBĘ RESETU HASŁA (BRAK GPS)!\n\n"
                 f"Ktoś próbował wywołać reset hasła administratora (`{username}`), "
                 f"ale zgoda na geolokalizację została zablokowana lub odrzucona!\n\n"
-                f"📌 DANE POŁĄCZENIA:\n"
-                f"📅 Data: {data_str}\n"
-                f"⏰ Godzina: {godzina_str}\n"
-                f"🌐 Adres IP: {user_ip}\n"
-                f"🏙️ Sieć IP: {resolved_ip_str}\n"
-                f"📱 Urządzenie: {device_info}\n"
+                f"DANE POŁĄCZENIA:\n"
+                f"Data: {data_str}\n"
+                f"Godzina: {godzina_str}\n"
+                f"Adres IP: {user_ip}\n"
+                f"Sieć IP: {resolved_ip_str}\n"
+                f"Urządzenie: {device_info}\n"
             )
             thr = Thread(target=send_telegram_alert, args=[alert_brak_gps])
             thr.start()
 
-            flash("⚠️ Procedura resetu hasła wymusza udostępnienie lokalizacji GPS! Zaznacz zgodę w przeglądarce i spróbuj ponownie.", "danger")
+            flash("Procedura resetu hasła wymusza udostępnienie lokalizacji GPS! Zaznacz zgodę w przeglądarce i spróbuj ponownie.", "danger")
             return redirect(url_for('login_page'))
 
         maps_url = f"https://www.google.com/maps/search/?api=1&query={browser_lat},{browser_lng}"
@@ -942,23 +1028,23 @@ def reset_admin_password():
         )
 
         tekst_telegram = (
-            f"🚨 *PROŚBA O ZMIANĘ HASŁA ADMINISTRATORA!*\n\n"
+            f"[ALERT] *PROŚBA O ZMIANĘ HASŁA ADMINISTRATORA!*\n\n"
             f"Szefie, ktoś uruchomił procedurę zmiany/resetu hasła do konta Admin (`{username}`).\n\n"
-            f"📌 *SZCZEGÓŁY PRÓBY:*\n"
-            f"📅 Data: {data_str}\n"
-            f"⏰ Godzina: {godzina_str}\n"
-            f"🌐 IP: {user_ip}\n"
-            f"🏙️ Sieć/IP Geolokalizacja: {resolved_ip_str}\n"
-            f"🛰️ Dokładne GPS Urządzenia: {browser_lat}, {browser_lng}\n"
-            f"🗺️ Google Maps: {maps_url}\n"
-            f"📱 Urządzenie: {device_info}\n"
-            f"🖥️ Full User-Agent: {user_agent_raw}\n\n"
-            f"⚠️ Jeśli to nie Ty, zgłoś to natychmiast!\n\n"
-            f"❓ *CZY TO TY?*\n"
+            f"*SZCZEGÓŁY PRÓBY:*\n"
+            f"Data: {data_str}\n"
+            f"Godzina: {godzina_str}\n"
+            f"IP: {user_ip}\n"
+            f"Sieć/IP Geolokalizacja: {resolved_ip_str}\n"
+            f"Dokładne GPS Urządzenia: {browser_lat}, {browser_lng}\n"
+            f"Google Maps: {maps_url}\n"
+            f"Urządzenie: {device_info}\n"
+            f"Full User-Agent: {user_agent_raw}\n\n"
+            f"UWAGA: Jeśli to nie Ty, zgłoś to natychmiast!\n\n"
+            f"*CZY TO TY?*\n"
             f"Jeśli chcesz zmienić hasło, odpisz na tę wiadomość podając nowe hasło w formacie:\n"
             f"`/ustaw_haslo TwojeNoweHaslo`\n\n"
             f"LUB jeśli chcesz odrzucić próbę, wpisz: `/odrzuc`\n\n"
-            f"⏳ *Ważność żądania: 5 minut.*"
+            f"*Ważność żądania: 5 minut.*"
         )
 
         thr = Thread(target=send_telegram_alert, args=[tekst_telegram])
@@ -1260,6 +1346,79 @@ def delete_announcement(id):
 @app.route('/admin/add_schedule', methods=['POST'])
 @staff_required
 def add_schedule():
+    fallback = url_for('ksDash') if session.get('user_role') == 'ksiądz' else url_for('admin_page')
+    schedule_batches_json = (request.form.get('schedule_batches_json') or '').strip()
+    valid_days = {'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'}
+    valid_user_ids = {u.id for u in Users.query.with_entities(Users.id).all()}
+
+    if schedule_batches_json:
+        try:
+            batches = json.loads(schedule_batches_json)
+            if not isinstance(batches, list) or len(batches) == 0:
+                flash("Nie udało się zapisać. Wybierz co najmniej jednego ministranta oraz termin dyżuru!", "warning")
+                return redirect(request.referrer or fallback)
+
+            added_count = 0
+            already_assigned = 0
+            skipped_removed_hour = 0
+            affected_users = set()
+
+            for item in batches:
+                if not isinstance(item, dict):
+                    continue
+                uids = []
+                if 'user_id' in item and str(item.get('user_id')).isdigit():
+                    uid_val = int(item['user_id'])
+                    if uid_val in valid_user_ids:
+                        uids.append(uid_val)
+                for raw_uid in item.get('user_ids', []):
+                    if str(raw_uid).isdigit():
+                        uid_val = int(raw_uid)
+                        if uid_val in valid_user_ids and uid_val not in uids:
+                            uids.append(uid_val)
+
+                slots = item.get('slots', [])
+                if not uids or not isinstance(slots, list):
+                    continue
+
+                for slot in slots:
+                    if not isinstance(slot, dict):
+                        continue
+                    dzien = (slot.get('dzien') or '').strip()
+                    godzina = _normalize_hour(slot.get('godzina'))
+                    if dzien not in valid_days or not godzina:
+                        continue
+                    if godzina == '14:00':
+                        skipped_removed_hour += 1
+                        continue
+                    for uid in uids:
+                        existing = Schedule.query.filter_by(user_id=uid, dzien_tygodnia=dzien, godzina=godzina).first()
+                        if not existing:
+                            db.session.add(Schedule(user_id=uid, dzien_tygodnia=dzien, godzina=godzina))
+                            added_count += 1
+                            affected_users.add(uid)
+                        else:
+                            already_assigned += 1
+
+            db.session.commit()
+            if added_count > 0:
+                log_audit_event("LOG_ADMIN_ACTION", details=f"Masowe przypisanie {added_count} dyżur(ów) w grafiku dla {len(affected_users)} osób")
+                msg = f"Pomyślnie zapisano {added_count} przypisań w grafiku dla {len(affected_users)} ministrant(ów)."
+                if already_assigned > 0:
+                    msg += f" ({already_assigned} było już przypisanych)."
+                flash(msg, "success")
+            elif skipped_removed_hour > 0:
+                flash("Msza o godzinie 14:00 została usunięta z harmonogramu i nie może zostać dodana.", "warning")
+            elif already_assigned > 0:
+                flash("Wszyscy wybrani ministranci są już przypisani do wskazanych terminów!", "info")
+            else:
+                flash("Wybierz co najmniej jednego ministranta oraz prawidłowy dzień i godzinę.", "warning")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Coś poszło nie tak przy masowym przypisywaniu grafiku: {e}", "danger")
+
+        return redirect(request.referrer or fallback)
+
     raw_user_ids = request.form.getlist('user_ids')
     single_id = request.form.get('user_id')
     if not raw_user_ids and single_id:
@@ -1270,14 +1429,19 @@ def add_schedule():
         for part in str(uid).split(','):
             part = part.strip()
             if part.isdigit():
-                all_user_ids.append(int(part))
+                uid_val = int(part)
+                if uid_val in valid_user_ids and uid_val not in all_user_ids:
+                    all_user_ids.append(uid_val)
                 
-    dzien = request.form.get('dzien')
-    godzina = request.form.get('godzina')
+    dzien = (request.form.get('dzien') or '').strip()
+    godzina = _normalize_hour(request.form.get('godzina'))
     
-    if not all_user_ids or not dzien or not godzina:
+    if not all_user_ids or dzien not in valid_days or not godzina:
         flash("Nie udało się zapisać. Wybierz co najmniej jednego ministranta oraz dzień i godzinę!", "warning")
-        fallback = url_for('ksDash') if session.get('user_role') == 'ksiądz' else url_for('admin_page')
+        return redirect(request.referrer or fallback)
+
+    if godzina == '14:00':
+        flash("Msza o godzinie 14:00 została usunięta z harmonogramu i nie może zostać dodana.", "warning")
         return redirect(request.referrer or fallback)
         
     try:
@@ -1308,7 +1472,6 @@ def add_schedule():
         db.session.rollback()
         flash(f"Coś poszło nie tak przy dodawaniu służby: {e}", "danger")
         
-    fallback = url_for('ksDash') if session.get('user_role') == 'ksiądz' else url_for('admin_page')
     return redirect(request.referrer or fallback)
 
 @app.route('/admin/delete_schedule/<int:id>', methods=['POST'])
@@ -1338,7 +1501,14 @@ def admin_page():
     ).all()
     
     all_users_approved = Users.query.filter_by(is_approved=True).all()
-    pending_users = Users.query.filter_by(is_approved=False).order_by(Users.created_at.desc()).all()
+    pending_users = Users.query.filter(
+        Users.is_approved == False,
+        (Users.verification_status.is_(None)) | (Users.verification_status != 'REJECTED')
+    ).order_by(Users.created_at.desc()).all()
+    rejected_users = Users.query.filter(
+        Users.is_approved == False,
+        Users.verification_status == 'REJECTED'
+    ).order_by(Users.created_at.desc()).all()
     all_announcements = Announcement.query.order_by(Announcement.data_dodania.desc()).all()
     schedules = db.session.query(Schedule, Users).join(Users, Schedule.user_id == Users.id).all()
 
@@ -1350,6 +1520,8 @@ def admin_page():
     for sch, u in schedules:
         dzien = sch.dzien_tygodnia
         godzina = sch.godzina
+        if godzina == '14:00':
+            continue
         if godzina not in plan_tygodnia[dzien]: plan_tygodnia[dzien][godzina] = []
         plan_tygodnia[dzien][godzina].append({'id': sch.id, 'user': u})
     for dzien in plan_tygodnia:
@@ -1373,7 +1545,7 @@ def admin_page():
             'total': total, 'morning': morning, 'evening': evening, 'other': total - (morning + evening)
         })
 
-    unapproved_users = Users.query.filter_by(is_approved=False).all()
+    unapproved_users = pending_users
     unapproved_count = len(unapproved_users)
     approved_users = Users.query.filter_by(is_approved=True).order_by(Users.nazwisko, Users.imie).all()
     all_users = Users.query.order_by(Users.created_at.desc()).all()
@@ -1387,6 +1559,7 @@ def admin_page():
         users=all_users, 
         approved_users=approved_users,
         pending_users=pending_users,
+        rejected_users=rejected_users,
         announcements=all_announcements, 
         stats=user_stats, 
         plan=plan_tygodnia, 
@@ -1418,7 +1591,7 @@ def admin_change_password_inline(user_id):
         user.locked_until = None
         db.session.commit()
         log_audit_event("LOG_ADMIN_ACTION", details=f"Zmieniono hasło (inline) dla użytkownika @{user.username}")
-        flash(f'Hasło użytkownika {user.imie} {user.nazwisko} zostało zaktualizowane! 🔑', 'success')
+        flash(f'Hasło użytkownika {user.imie} {user.nazwisko} zostało zaktualizowane!', 'success')
     else:
         flash('Hasło nie może być puste!', 'danger')
         
@@ -1428,49 +1601,25 @@ def admin_change_password_inline(user_id):
 @admin_required
 def approve_user(user_id):
     user = Users.query.get_or_404(user_id)
-    user.is_approved = True
-    db.session.commit()
-    log_audit_event("LOG_ADMIN_ACTION", details=f"Zatwierdzono użytkownika @{user.username}")
-    flash(f'Konto użytkownika {user.username} ({user.imie} {user.nazwisko}) zostało pomyślnie zatwierdzone!', 'success')
-    return redirect(request.referrer or url_for('admin_page'))
+    _approve_user_account(user)
+    return redirect(url_for('admin_page') + '#weryfikacja')
 
 @app.route('/admin/reject_user/<int:user_id>', methods=['POST'])
 @admin_required
 def reject_user(user_id):
     user = Users.query.get_or_404(user_id)
-    uname = user.username
-    full_name = f"{user.imie} {user.nazwisko}"
-    try:
-        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
-        Attendance.query.filter_by(user_id=user_id).delete()
-        Schedule.query.filter_by(user_id=user_id).delete()
-        db.session.delete(user)
-        db.session.commit()
-        log_audit_event("LOG_ADMIN_ACTION", details=f"Odrzucono i usunięto konto @{uname}")
-        flash(f'Konto użytkownika {uname} ({full_name}) zostało odrzucone i usunięte.', 'warning')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Błąd podczas odrzucania konta: {e}', 'danger')
-    return redirect(request.referrer or url_for('admin_page'))
+    _reject_user_account(user)
+    return redirect(url_for('admin_page') + '#weryfikacja')
 
 @app.route('/admin/verify_action/<int:user_id>/<string:akcja>', methods=['POST'])
 @admin_required
 def verify_action(user_id, akcja):
     u = Users.query.get_or_404(user_id)
-    uname = u.username
-    if akcja == 'zatwierdz':
-        u.is_approved = True
-        log_audit_event("LOG_ADMIN_ACTION", details=f"Zatwierdzono konto @{uname}")
-        flash(f"Użytkownik {uname} zatwierdzony!", "success")
-    else:
-        PasswordResetRequest.query.filter_by(user_id=user_id).delete()
-        Attendance.query.filter_by(user_id=user_id).delete()
-        Schedule.query.filter_by(user_id=user_id).delete()
-        db.session.delete(u)
-        log_audit_event("LOG_ADMIN_ACTION", details=f"Odrzucono rejestrację @{uname}")
-        flash(f"Odrzucono rejestrację {uname}.", "danger")
-    db.session.commit()
-    return redirect(request.referrer or url_for('admin_page'))
+    if akcja in ('zatwierdz', 'akceptuj'):
+        _approve_user_account(u)
+    elif akcja == 'odrzuc':
+        _reject_user_account(u)
+    return redirect(url_for('admin_page') + '#weryfikacja')
 
 @app.route('/admin/delete_bulk_users', methods=['POST'])
 @admin_required
@@ -1668,6 +1817,7 @@ def dashboard_page():
         return render_template(
             'dash_uproszczony.html',
             user=aktualny_uzytkownik.username,
+            user_obj=aktualny_uzytkownik,
             announcements=announcements,
             attendances=attendances,
             attendance_days_back=days_back,
@@ -1677,6 +1827,7 @@ def dashboard_page():
     return render_template(
         'dashboard.html',
         user=aktualny_uzytkownik.username,
+        user_obj=aktualny_uzytkownik,
         announcements=announcements,
         attendances=attendances,
         moje_dyzury=moje_dyzury,
@@ -1686,6 +1837,16 @@ def dashboard_page():
         min_attendance_date=min_date_iso,
         max_attendance_date=max_date_iso
     )
+
+
+@app.route('/dismiss_welcome_message', methods=['POST'])
+@login_required
+def dismiss_welcome_message():
+    aktualny_uzytkownik = db.session.get(Users, session['user_id'])
+    if aktualny_uzytkownik and getattr(aktualny_uzytkownik, 'admin_message', None):
+        aktualny_uzytkownik.admin_message = None
+        db.session.commit()
+    return redirect(url_for('dashboard_page'))
 
 @app.route('/delete_my_attendance/<int:id>', methods=['POST'])
 @login_required
@@ -2033,10 +2194,10 @@ def scheduled_monthly_drive_export(force=False):
                 details=f"Automatyczny miesięczny eksport na Dysk Google: {filename} (ID: {file_id})"
             )
             send_telegram_alert(
-                f"☁️ *AUTOMATYCZNY EKSPORT NA DYSK GOOGLE ZAKOŃCZONY!*\n\n"
-                f"📄 Plik: `{filename}`\n"
-                f"🆔 Drive ID: `{file_id}`\n"
-                f"📅 Okres: {month_key}"
+                f"[DRIVE] *AUTOMATYCZNY EKSPORT NA DYSK GOOGLE ZAKOŃCZONY!*\n\n"
+                f"Plik: `{filename}`\n"
+                f"Drive ID: `{file_id}`\n"
+                f"Okres: {month_key}"
             )
             return True
         except Exception as e:
@@ -2047,9 +2208,9 @@ def scheduled_monthly_drive_export(force=False):
                 details=f"Błąd automatycznego eksportu na Dysk Google ({month_key}): {e}"
             )
             send_telegram_alert(
-                f"❌ *BŁĄD AUTOMATYCZNEGO EKSPORTU NA DYSK GOOGLE!*\n\n"
-                f"📅 Okres: {month_key}\n"
-                f"⚠️ Szczegóły: `{e}`"
+                f"[BŁĄD] *BŁĄD AUTOMATYCZNEGO EKSPORTU NA DYSK GOOGLE!*\n\n"
+                f"Okres: {month_key}\n"
+                f"Szczegóły: `{e}`"
             )
             return False
 
@@ -2070,7 +2231,7 @@ def export_drive_now():
         )
         Thread(
             target=send_telegram_alert,
-            args=[f"☁️ *RĘCZNY EKSPORT NA DYSK GOOGLE:* Wyeksportowano plik `{filename}` (ID: `{file_id}`)."]
+            args=[f"[DRIVE] *RĘCZNY EKSPORT NA DYSK GOOGLE:* Wyeksportowano plik `{filename}` (ID: `{file_id}`)."]
         ).start()
         flash(f"Pomyślnie wysłano raport {filename} na Dysk Google (ID: {file_id})!", "success")
     except Exception as e:
@@ -2217,7 +2378,24 @@ def ensure_schema_migrations():
                     conn.execute(text("ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0"))
                 if 'locked_until' not in existing_cols:
                     conn.execute(text("ALTER TABLE users ADD COLUMN locked_until TIMESTAMP NULL"))
+                if 'registration_device' not in existing_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN registration_device VARCHAR(255) NULL"))
+                if 'verification_status' not in existing_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN verification_status VARCHAR(20) DEFAULT 'PENDING'"))
+                if 'rejection_reason' not in existing_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN rejection_reason TEXT NULL"))
+                if 'admin_message' not in existing_cols:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN admin_message TEXT NULL"))
+        # Uzupełnienie verification_status dla istniejących użytkowników (działa spójnie na SQLite i PostgreSQL)
+        users_to_sync = Users.query.filter(Users.verification_status.is_(None)).all()
+        for u in users_to_sync:
+            u.verification_status = 'APPROVED' if u.is_approved else 'PENDING'
+        # Usunięcie wycofanej mszy o godzinie 14:00 z grafiku
+        removed_14 = Schedule.query.filter_by(godzina='14:00').delete()
+        if users_to_sync or removed_14:
+            db.session.commit()
     except Exception as e:
+        db.session.rollback()
         print(f"Ostrzeżenie migracji schematu: {e}")
 
 def init_admin_account():
@@ -2236,7 +2414,8 @@ def init_admin_account():
             password=hashed_admin_pass, 
             role='admin', 
             uproszczony=False,
-            is_approved=True
+            is_approved=True,
+            verification_status='APPROVED'
         )
         db.session.add(admin_user)
         db.session.commit()
@@ -2254,6 +2433,9 @@ def init_admin_account():
         if not admin_user.is_approved:
             admin_user.is_approved = True
             changed = True
+        if admin_user.verification_status != 'APPROVED':
+            admin_user.verification_status = 'APPROVED'
+            changed = True
         if changed:
             db.session.commit()
 
@@ -2264,6 +2446,9 @@ def init_admin_account():
         for adm in all_admins:
             if not adm.is_approved:
                 adm.is_approved = True
+                admin_changed = True
+            if adm.verification_status != 'APPROVED':
+                adm.verification_status = 'APPROVED'
                 admin_changed = True
             if adm.password and not adm.password.startswith(('pbkdf2:', 'scrypt:')):
                 adm.password = generate_password_hash(adm.password, method='pbkdf2:sha256')

@@ -62,8 +62,8 @@
         <div class="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
             <div class="flex items-center gap-3">
                 <div class="relative">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand to-purple-500 flex items-center justify-center font-black text-xl text-white shadow-brand-glow">
-                        👑
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand to-purple-500 flex items-center justify-center font-black text-white shadow-brand-glow">
+                        {{ svg_icon('crown', 'w-6 h-6') }}
                     </div>
                     <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-4 border-darkbg animate-pulse"></div>
                 </div>
@@ -72,8 +72,8 @@
                     <p class="text-xs text-brand font-semibold tracking-wider">Status: Root Admin</p>
                 </div>
             </div>
-            <a href="{{ url_for('logout') }}" class="px-3 py-2 rounded-xl bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 transition duration-300 flex items-center gap-1 text-xs font-bold" title="Wyloguj się z panelu">
-                <span>🚪</span> Wyloguj
+            <a href="{{ url_for('logout') }}" class="px-3 py-2 rounded-xl bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 transition duration-300 flex items-center gap-1.5 text-xs font-bold" title="Wyloguj się z panelu">
+                {{ svg_icon('logout', 'w-3.5 h-3.5') }} <span>Wyloguj</span>
             </a>
         </div>
 
@@ -85,42 +85,42 @@
         <nav class="flex flex-col gap-2 relative z-20">
             <button onclick="showSection('dashboard')" id="btn-dashboard" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300">
-                <span class="text-base">📊</span> Panel Analityczny
+                {{ svg_icon('chart-bar', 'w-5 h-5') }} <span>Panel Analityczny</span>
             </button>
             
             <button onclick="showSection('sluzby')" id="btn-sluzby" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300">
-                <span class="text-base">🛡️</span> Zarządzanie Służbami
+                {{ svg_icon('shield', 'w-5 h-5') }} <span>Zarządzanie Służbami</span>
             </button>
             
             <button onclick="showSection('ranking')" id="btn-ranking" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300">
-                <span class="text-base">🏆</span> Cyfrowy Ranking
+                {{ svg_icon('trophy', 'w-5 h-5') }} <span>Cyfrowy Ranking</span>
             </button>
             
             <button onclick="showSection('plan')" id="btn-plan" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300">
-                <span class="text-base">📅</span> Plany i Grafiki
+                {{ svg_icon('calendar', 'w-5 h-5') }} <span>Plany i Grafiki</span>
             </button>
             
             <button onclick="showSection('ogloszenia')" id="btn-ogloszenia" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300">
-                <span class="text-base">📢</span> Tablica Ogłoszeń
+                {{ svg_icon('megaphone', 'w-5 h-5') }} <span>Tablica Ogłoszeń</span>
             </button>
             
             <button onclick="showSection('uzytkownicy')" id="btn-uzytkownicy" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300">
-                <span class="text-base">👥</span> Rejestr Kont
+                {{ svg_icon('users', 'w-5 h-5') }} <span>Rejestr Kont</span>
             </button>
 
             <button onclick="showSection('ustawienia')" id="btn-ustawienia" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300">
-                <span class="text-base">⚙️</span> Ustawienia Rdzenia
+                {{ svg_icon('settings', 'w-5 h-5') }} <span>Ustawienia Rdzenia</span>
             </button>
 
             <button onclick="showSection('weryfikacja')" id="btn-weryfikacja" 
                 class="nav-btn relative flex items-center justify-between w-full p-4 rounded-2xl font-extrabold text-sm text-left text-gray-300 hover:bg-brand/30 hover:text-white transition-all duration-300">
-                <span class="flex items-center gap-3">🔐 Weryfikacja Kont</span>
+                <span class="flex items-center gap-3">{{ svg_icon('lock', 'w-5 h-5') }} <span>Weryfikacja Kont</span></span>
                 
                 {% if unapproved_count > 0 %}
                 <span class="absolute right-4 flex h-3 w-3">
@@ -131,15 +131,15 @@
             </button>
 
             <a href="{{ url_for('dashboard_page') }}" class="flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left text-purple-300 bg-brand/10 hover:bg-brand/20 transition-all duration-300 border border-brand/20 mt-2">
-                <span>👦</span> Panel Ministranta
+                {{ svg_icon('user', 'w-5 h-5') }} <span>Panel Ministranta</span>
             </a>
 
             <a href="{{ url_for('switch_to_normal') }}" class="flex items-center gap-3 w-full p-3.5 rounded-2xl font-extrabold text-xs text-left text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all duration-300 border border-emerald-500/20">
-                <span>🔄</span> Przełącz na Konto Normalne
+                {{ svg_icon('refresh', 'w-4 h-4') }} <span>Przełącz na Konto Normalne</span>
             </a>
 
             <a href="{{ url_for('logout') }}" class="flex items-center justify-center gap-2 w-full p-3.5 rounded-2xl font-extrabold text-sm text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-all duration-300 border border-red-500/20 mt-2">
-                <span>🚪</span> Wyloguj się z sesji
+                {{ svg_icon('logout', 'w-4 h-4') }} <span>Wyloguj się z sesji</span>
             </a>
         </nav>
 
@@ -163,8 +163,8 @@
                     <div class="absolute -top-10 -right-10 w-24 h-24 bg-brand/10 rounded-full blur-2xl"></div>
                     <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">Suma Obsłużonych Służb</div>
                     <div class="text-4xl font-black text-white mt-2 font-mono tracking-tight">{{ attendances|length }}</div>
-                    <div class="text-xs text-success font-semibold mt-2 flex items-center gap-1">
-                        <span>📈</span> Status bazy danych stabilny
+                    <div class="text-xs text-success font-semibold mt-2 flex items-center gap-1.5">
+                        {{ svg_icon('trending-up', 'w-4 h-4') }} <span>Status bazy danych stabilny</span>
                     </div>
                 </div>
 
@@ -172,8 +172,8 @@
                     <div class="absolute -top-10 -right-10 w-24 h-24 bg-success/10 rounded-full blur-2xl"></div>
                     <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">Zarejestrowani Członkowie</div>
                     <div class="text-4xl font-black text-white mt-2 font-mono tracking-tight">{{ users|length }}</div>
-                    <div class="text-xs text-brand font-semibold mt-2 flex items-center gap-1">
-                        <span>👥</span> Aktywne profile użytkowników
+                    <div class="text-xs text-brand font-semibold mt-2 flex items-center gap-1.5">
+                        {{ svg_icon('users', 'w-4 h-4') }} <span>Aktywne profile użytkowników</span>
                     </div>
                 </div>
 
@@ -181,8 +181,8 @@
                     <div class="absolute -top-10 -right-10 w-24 h-24 bg-warning/10 rounded-full blur-2xl"></div>
                     <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">Aktualne Ogłoszenia</div>
                     <div class="text-4xl font-black text-white mt-2 font-mono tracking-tight">{{ announcements|length }}</div>
-                    <div class="text-xs text-warning font-semibold mt-2 flex items-center gap-1">
-                        <span>📢</span> Komunikaty na tablicy głównej
+                    <div class="text-xs text-warning font-semibold mt-2 flex items-center gap-1.5">
+                        {{ svg_icon('megaphone', 'w-4 h-4') }} <span>Komunikaty na tablicy głównej</span>
                     </div>
                 </div>
 
@@ -190,8 +190,8 @@
                     <div class="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
                     <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">Wpisy w Grafiku</div>
                     <div class="text-4xl font-black text-white mt-2 font-mono tracking-tight">{{ dyzury_count }}</div>
-                    <div class="text-xs text-purple-400 font-semibold mt-2 flex items-center gap-1">
-                        <span>📅</span> Przydziały asyst liturgicznych
+                    <div class="text-xs text-purple-400 font-semibold mt-2 flex items-center gap-1.5">
+                        {{ svg_icon('calendar', 'w-4 h-4') }} <span>Przydziały asyst liturgicznych</span>
                     </div>
                 </div>
             </div>
@@ -199,7 +199,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="glass-card rounded-3xl p-6 lg:col-span-2 border border-white/5">
                     <h3 class="text-lg font-extrabold text-white mb-6 flex items-center gap-2">
-                        <span>📊</span> Wykres Aktywności
+                        {{ svg_icon('chart-bar', 'w-5 h-5 text-brand') }} <span>Wykres Aktywności</span>
                     </h3>
                     <div class="space-y-4">
                         {% for u in users[:5] %}
@@ -229,7 +229,7 @@
                 <div class="glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
                     <div>
                         <h3 class="text-lg font-extrabold text-white mb-4 flex items-center gap-2">
-                            <span>💡</span> Szybki Raport
+                            {{ svg_icon('lightbulb', 'w-5 h-5 text-warning') }} <span>Szybki Raport</span>
                         </h3>
                         <p class="text-sm text-gray-400 leading-relaxed">
                             System przeanalizował ostatnie wpisy. Najwyższa frekwencja odnotowywana jest tradycyjnie na nabożeństwach niedzielnych. Pamiętaj o regularnym weryfikowaniu wpisów o statusie "Inna", aby zapobiegać nadużyciom punktowym.
@@ -252,19 +252,19 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <button type="button" onclick="submitBulkDeleteAttendances()" class="bg-danger/20 hover:bg-danger/30 text-danger border border-danger/30 px-5 py-3.5 rounded-2xl font-bold text-xs transition duration-300 flex items-center gap-2 shadow-lg hover:-translate-y-0.5">
-                        <span>🗑️</span> Usuń Zaznaczone (<span id="selected-att-count">0</span>)
+                        {{ svg_icon('trash', 'w-4 h-4') }} <span>Usuń Zaznaczone (<span id="selected-att-count">0</span>)</span>
                     </button>
                     <a href="{{ url_for('export_attendances') }}" class="bg-gradient-to-r from-brand to-purple-600 text-white px-5 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:-translate-y-0.5 transition duration-300 flex items-center gap-2">
-                        <span>📥</span> Eksportuj Służby (.xlsx)
+                        {{ svg_icon('download', 'w-4 h-4') }} <span>Eksportuj Służby (.xlsx)</span>
                     </a>
                     <form action="{{ url_for('export_drive_now') }}" method="POST" class="inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 px-5 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:-translate-y-0.5 transition duration-300 flex items-center gap-2">
-                            <span>☁️</span> Wyślij Eksport na Dysk Google
+                            {{ svg_icon('cloud', 'w-4 h-4') }} <span>Wyślij Eksport na Dysk Google</span>
                         </button>
                     </form>
                     <button class="bg-gradient-to-r from-success to-green-400 text-white px-6 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:-translate-y-0.5 transition duration-300 flex items-center gap-2" onclick="openModal('addAttendanceModal')">
-                        <span>➕</span> Dodaj Służby (Ręcznie / Masowo)
+                        {{ svg_icon('plus', 'w-4 h-4') }} <span>Dodaj Służby (Ręcznie / Masowo)</span>
                     </button>
                 </div>
             </div>
@@ -274,7 +274,7 @@
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <h3 class="text-lg font-black text-white flex items-center gap-2">
-                            <span>⏳</span> Okno czasowe zgłaszania służb
+                            {{ svg_icon('clock', 'w-5 h-5 text-brand') }} <span>Okno czasowe zgłaszania służb</span>
                         </h3>
                         <p class="text-xs text-gray-400 mt-1">
                             Określ, do ilu dni wstecz ministranci mogą samodzielnie dopisywać służby (aktualnie: <strong class="text-brand">{{ attendance_days_back|default(3) }} dni wstecz</strong>).
@@ -290,8 +290,8 @@
                         <div class="flex items-center gap-1.5 ml-1">
                             <input type="number" name="days_back" id="sluzby_days_back_input" value="{{ attendance_days_back|default(3) }}" min="0" max="365" required
                                 class="w-20 bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2 text-center text-white text-xs font-mono font-bold focus:outline-none focus:border-brand">
-                            <button type="submit" class="bg-brand hover:bg-brand/90 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition shadow-brand-glow">
-                                💾 Zapisz limit
+                            <button type="submit" class="bg-brand hover:bg-brand/90 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition shadow-brand-glow inline-flex items-center gap-1.5">
+                                {{ svg_icon('save', 'w-3.5 h-3.5') }} <span>Zapisz limit</span>
                             </button>
                         </div>
                     </form>
@@ -307,7 +307,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="toggleSelectAllAttendancesBtn()" class="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 px-3.5 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1.5">
-                        <span id="select-all-atts-btn-icon">☑️</span> <span id="select-all-atts-btn-text">Zaznacz widoczne</span>
+                        <span id="select-all-atts-btn-icon">{{ svg_icon('check-square', 'w-3.5 h-3.5') }}</span> <span id="select-all-atts-btn-text">Zaznacz widoczne</span>
                     </button>
                 </div>
             </div>
@@ -360,13 +360,13 @@
                                                 data-type="{{ att.typ_mszy }}"
                                                 data-inna="{{ att.nazwa_inna or '' }}"
                                                 onclick="openAdminEditModal(this.dataset.id, this.dataset.date, this.dataset.time, this.dataset.type, this.dataset.inna)"
-                                                class="bg-brand/20 hover:bg-brand text-white text-xs font-bold px-3 py-2 rounded-xl transition">
-                                            ✏️ Edytuj
+                                                class="bg-brand/20 hover:bg-brand text-white text-xs font-bold px-3 py-2 rounded-xl transition inline-flex items-center gap-1.5">
+                                            {{ svg_icon('edit', 'w-3.5 h-3.5') }} <span>Edytuj</span>
                                         </button>
                                         <form action="{{ url_for('delete_attendance', id=att.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno bezpowrotnie skasować ten rekord obecności?')">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="bg-danger/10 hover:bg-danger/20 text-danger p-2 rounded-xl transition duration-300 text-xs font-bold">
-                                                🗑️ Usuń
+                                            <button type="submit" class="bg-danger/10 hover:bg-danger/20 text-danger p-2 rounded-xl transition duration-300 text-xs font-bold inline-flex items-center gap-1.5">
+                                                {{ svg_icon('trash', 'w-3.5 h-3.5') }} <span>Usuń</span>
                                             </button>
                                         </form>
                                     </div>
@@ -387,7 +387,7 @@
                     <p class="text-gray-400 text-sm mt-1">Automatycznie generowany system punktowy klasyfikujący ministrantów na podstawie frekwencji.</p>
                 </div>
                 <a href="{{ url_for('export_ranking') }}" class="bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 text-white px-6 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:-translate-y-0.5 transition duration-300 flex items-center gap-2">
-                    📥 Eksportuj Ranking (.xlsx)
+                    {{ svg_icon('download', 'w-4 h-4') }} <span>Eksportuj Ranking (.xlsx)</span>
                 </a>
             </div>
 
@@ -418,44 +418,83 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ url_for('export_schedule') }}" class="bg-white/5 border border-white/10 hover:bg-white/10 text-white px-5 py-3 rounded-2xl font-bold text-xs transition-all duration-300 flex items-center gap-2">
-                        📥 Eksportuj Grafik (.xlsx)
+                        {{ svg_icon('download', 'w-4 h-4') }} <span>Eksportuj Grafik (.xlsx)</span>
                     </a>
                 </div>
             </div>
 
             <div class="glass-card rounded-3xl p-6 border border-white/5 mb-8">
-                <h3 class="text-lg font-black text-white mb-5 flex items-center gap-2">
-                    <span class="p-1.5 bg-brand/10 text-brand rounded-lg">➕</span> Dodaj Przydział Stałego Dyżuru
-                </h3>
-                <form action="{{ url_for('add_schedule') }}" method="POST" onsubmit="return validatePlanMultiSelect()" class="flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                    <h3 class="text-lg font-black text-white flex items-center gap-2">
+                        <span class="p-1.5 bg-brand/10 text-brand rounded-lg">{{ svg_icon('plus', 'w-4 h-4') }}</span>
+                        <span>Przypisanie Ministrantów do Grafiku</span>
+                    </h3>
+                    <div class="inline-flex p-1 bg-black/30 rounded-xl border border-white/10">
+                        <button type="button" id="planModeBtnMass" onclick="setPlanAssignMode('mass')"
+                            class="px-3.5 py-2 rounded-lg text-xs font-black bg-brand text-white transition flex items-center gap-1.5">
+                            {{ svg_icon('users', 'w-3.5 h-3.5') }} <span>Masowe przypisywanie</span>
+                        </button>
+                        <button type="button" id="planModeBtnSingle" onclick="setPlanAssignMode('single')"
+                            class="px-3.5 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-1.5">
+                            {{ svg_icon('calendar', 'w-3.5 h-3.5') }} <span>Wspólny dyżur</span>
+                        </button>
+                    </div>
+                </div>
+
+                <form id="adminPlanForm" action="{{ url_for('add_schedule') }}" method="POST" onsubmit="return validatePlanMultiSelect()" class="flex flex-col gap-4">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-                        <div class="lg:col-span-4 flex flex-col gap-1.5">
-                            <label class="text-xs font-bold uppercase text-gray-400">Dzień Tygodnia</label>
-                            <select name="dzien" id="adminPlanDzien" onchange="updateAdminGodziny()" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
-                                <option value="Poniedziałek" class="bg-[#1e293b] text-white">Poniedziałek</option>
-                                <option value="Wtorek" class="bg-[#1e293b] text-white">Wtorek</option>
-                                <option value="Środa" class="bg-[#1e293b] text-white">Środa</option>
-                                <option value="Czwartek" class="bg-[#1e293b] text-white">Czwartek</option>
-                                <option value="Piątek" class="bg-[#1e293b] text-white">Piątek</option>
-                                <option value="Sobota" class="bg-[#1e293b] text-white">Sobota</option>
-                                <option value="Niedziela" class="bg-[#1e293b] text-white">Niedziela</option>
-                            </select>
+                    <input type="hidden" name="schedule_batches_json" id="scheduleBatchesJson">
+
+                    <!-- TRYB 1: MASOWE PRZYPISYWANIE OSÓB DO RÓŻNYCH DNI I GODZIN -->
+                    <div id="massPlanModeContainer" class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-bold uppercase text-gray-400">1. Wybierz ministrantów do przypisania w grafiku:</label>
+                            <div id="massPlanUserSelectContainer"></div>
                         </div>
-                        <div class="lg:col-span-3 flex flex-col gap-1.5">
-                            <label class="text-xs font-bold uppercase text-gray-400">Godzina Służby</label>
-                            <select name="godzina" id="adminPlanGodzina" required class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
-                            </select>
+
+                        <div id="massPlanPerUserContainer" class="space-y-3">
+                            <div class="mass-plan-empty p-4 rounded-2xl border border-dashed border-white/10 text-center text-xs text-gray-500">
+                                Wybierz co najmniej jednego ministranta powyżej, aby ustawić mu indywidualne dni i godziny dyżurów.
+                            </div>
                         </div>
-                        <div class="lg:col-span-5 flex justify-end">
-                            <button type="submit" class="w-full bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 hover:to-purple-400 text-white font-black py-3.5 px-8 rounded-xl text-sm transition shadow-lg shadow-brand/20 whitespace-nowrap">
-                                ➕ Przypisz do grafiku
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="w-full sm:w-auto bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 hover:to-purple-400 text-white font-black py-3.5 px-8 rounded-xl text-sm transition shadow-lg shadow-brand/20 inline-flex items-center justify-center gap-2">
+                                {{ svg_icon('check', 'w-4 h-4') }} <span>Zapisz masowe przypisania w grafiku</span>
                             </button>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-bold uppercase text-gray-400">Wyszukaj i Wybierz Ministrantów (multi-select po loginie, imieniu, nazwisku):</label>
-                        <div id="adminPlanMultiSelectContainer"></div>
+
+                    <!-- TRYB 2: POJEDYNCZY DYŻUR (WSPÓLNY DZIEŃ I GODZINA DLA ZAZNACZONYCH) -->
+                    <div id="singlePlanModeContainer" class="hidden flex-col gap-4">
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+                            <div class="lg:col-span-4 flex flex-col gap-1.5">
+                                <label class="text-xs font-bold uppercase text-gray-400">Dzień Tygodnia</label>
+                                <select name="dzien" id="adminPlanDzien" onchange="updateAdminGodziny()" class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
+                                    <option value="Poniedziałek" class="bg-[#1e293b] text-white">Poniedziałek</option>
+                                    <option value="Wtorek" class="bg-[#1e293b] text-white">Wtorek</option>
+                                    <option value="Środa" class="bg-[#1e293b] text-white">Środa</option>
+                                    <option value="Czwartek" class="bg-[#1e293b] text-white">Czwartek</option>
+                                    <option value="Piątek" class="bg-[#1e293b] text-white">Piątek</option>
+                                    <option value="Sobota" class="bg-[#1e293b] text-white">Sobota</option>
+                                    <option value="Niedziela" class="bg-[#1e293b] text-white">Niedziela</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-3 flex flex-col gap-1.5">
+                                <label class="text-xs font-bold uppercase text-gray-400">Godzina Służby</label>
+                                <select name="godzina" id="adminPlanGodzina" class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-brand transition">
+                                </select>
+                            </div>
+                            <div class="lg:col-span-5 flex justify-end">
+                                <button type="submit" class="w-full bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 hover:to-purple-400 text-white font-black py-3.5 px-8 rounded-xl text-sm transition shadow-lg shadow-brand/20 whitespace-nowrap inline-flex items-center justify-center gap-2">
+                                    {{ svg_icon('plus', 'w-4 h-4') }} <span>Przypisz do grafiku</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-bold uppercase text-gray-400">Wyszukaj i Wybierz Ministrantów (multi-select po loginie, imieniu, nazwisku):</label>
+                            <div id="adminPlanMultiSelectContainer"></div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -472,7 +511,7 @@
                                 onclick="openDayScheduleModal('{{ dzien }}')" 
                                 title="Dodaj ministrantów do dnia: {{ dzien }}"
                                 class="bg-brand/20 hover:bg-brand text-purple-300 hover:text-white px-2.5 py-1.5 rounded-xl font-extrabold text-xs transition duration-200 flex items-center gap-1 shadow-sm shrink-0">
-                            <span>➕</span> <span class="hidden sm:inline">Dodaj</span>
+                            {{ svg_icon('plus', 'w-3.5 h-3.5') }} <span class="hidden sm:inline">Dodaj</span>
                         </button>
                     </div>
                     
@@ -482,7 +521,7 @@
                                 <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
                                     <div class="bg-brand/10 p-2 rounded-xl mb-3 border border-brand/20">
                                         <span class="font-bold text-sm text-brand flex items-center gap-1.5">
-                                            🕐 Godzina: {{ godzina }}
+                                            {{ svg_icon('clock', 'w-4 h-4') }} <span>Godzina: {{ godzina }}</span>
                                         </span>
                                     </div>
                                     <ul class="flex flex-col gap-2">
@@ -503,8 +542,8 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-xs text-gray-500 italic mt-2 flex items-center gap-1">
-                            <span>ℹ️</span> Brak zaplanowanych dyżurów.
+                        <p class="text-xs text-gray-500 italic mt-2 flex items-center gap-1.5">
+                            {{ svg_icon('info', 'w-3.5 h-3.5 text-brand shrink-0') }} <span>Brak zaplanowanych dyżurów.</span>
                         </p>
                     {% endif %}
                 </div>
@@ -529,8 +568,8 @@
                             <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Treść Ogłoszenia:</label>
                             <textarea name="tresc" required rows="5" placeholder="Wpisz szczegóły ogłoszenia..." class="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-brand transition"></textarea>
                         </div>
-                        <button type="submit" class="bg-brand text-white font-black p-4 rounded-xl text-xs tracking-wider uppercase transition shadow-brand-glow hover:bg-brand/90 mt-2">
-                            📢 Opublikuj Ogłoszenie
+                        <button type="submit" class="bg-brand text-white font-black p-4 rounded-xl text-xs tracking-wider uppercase transition shadow-brand-glow hover:bg-brand/90 mt-2 inline-flex items-center justify-center gap-2">
+                            {{ svg_icon('megaphone', 'w-4 h-4') }} <span>Opublikuj Ogłoszenie</span>
                         </button>
                     </form>
                 </div>
@@ -550,13 +589,13 @@
                             <div class="flex justify-between items-center pt-4 mt-6 border-t border-white/5">
                                 <span class="text-xs text-brand font-semibold">Emitowano przez: Szef</span>
                                 <div class="flex gap-2">
-                                    <button type="button" data-id="{{ og.id }}" data-tresc="{{ og.tresc }}" onclick="openEditOgModal(this.dataset.id, this.dataset.tresc)" class="text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-xl transition">
-                                        ✏️ Edytuj
+                                    <button type="button" data-id="{{ og.id }}" data-tresc="{{ og.tresc }}" onclick="openEditOgModal(this.dataset.id, this.dataset.tresc)" class="text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5">
+                                        {{ svg_icon('edit', 'w-3.5 h-3.5') }} <span>Edytuj</span>
                                     </button>
                                     <form action="{{ url_for('delete_announcement', id=og.id) }}" method="POST" class="inline" onsubmit="return confirm('Usunąć to ogłoszenie bezpowrotnie?')">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="text-xs font-bold bg-danger/10 hover:bg-danger/20 text-danger px-3 py-1.5 rounded-xl transition">
-                                            🗑️ Skasuj
+                                        <button type="submit" class="text-xs font-bold bg-danger/10 hover:bg-danger/20 text-danger px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5">
+                                            {{ svg_icon('trash', 'w-3.5 h-3.5') }} <span>Skasuj</span>
                                         </button>
                                     </form>
                                 </div>
@@ -581,10 +620,10 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <button type="button" onclick="toggleSelectAllUsersBtn()" class="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 px-4 py-3.5 rounded-2xl font-bold text-xs transition flex items-center gap-2">
-                        <span id="select-all-users-btn-icon">☑️</span> <span id="select-all-users-btn-text">Zaznacz wszystkich</span>
+                        <span id="select-all-users-btn-icon">{{ svg_icon('check-square', 'w-3.5 h-3.5') }}</span> <span id="select-all-users-btn-text">Zaznacz wszystkich</span>
                     </button>
                     <button type="button" onclick="submitBulkDeleteUsers()" class="bg-danger/20 hover:bg-danger/30 text-danger border border-danger/30 px-5 py-3.5 rounded-2xl font-bold text-xs transition duration-300 flex items-center gap-2 shadow-lg hover:-translate-y-0.5">
-                        <span>🗑️</span> Usuń Zaznaczonych Użytkowników (<span id="selected-user-count">0</span>)
+                        {{ svg_icon('trash', 'w-4 h-4') }} <span>Usuń Zaznaczonych Użytkowników (<span id="selected-user-count">0</span>)</span>
                     </button>
                 </div>
             </div>
@@ -643,7 +682,7 @@
                                     {% if u.username != session.get('username') and u.role != 'admin' %}
                                         <input type="checkbox" form="bulk-user-form" name="user_ids" value="{{ u.id }}" onchange="updateUserSelectionCount()" class="user-checkbox w-4 h-4 rounded accent-brand cursor-pointer">
                                     {% else %}
-                                        <span class="text-xs text-gray-500 font-mono" title="Konto administratora / bieżąca sesja">🔒</span>
+                                        <span class="text-gray-500 inline-flex items-center justify-center" title="Konto administratora / bieżąca sesja">{{ svg_icon('lock', 'w-3.5 h-3.5') }}</span>
                                     {% endif %}
                                 </td>
                                 <td class="p-5">
@@ -670,12 +709,12 @@
                                 </td>
                                 <td class="p-5 font-mono text-xs text-gray-400">
                                     {% if u.latitude and u.longitude %}
-                                        <span class="text-success font-bold flex items-center gap-1">🛰️ GPS Aktywny</span>
+                                        <span class="text-success font-bold flex items-center gap-1.5">{{ svg_icon('satellite', 'w-3.5 h-3.5') }} <span>GPS Aktywny</span></span>
                                         <a href="https://www.google.com/maps/search/?api=1&query={{ u.latitude|trim }},{{ u.longitude|trim }}" 
                                            target="_blank" 
                                            class="text-brand hover:underline font-bold text-[11px] mt-1 inline-flex items-center gap-1"
                                            title="Otwórz lokalizację w Google Maps">
-                                            🗺️ Pokaż na mapie
+                                            {{ svg_icon('map', 'w-3.5 h-3.5') }} <span>Pokaż na mapie</span>
                                         </a>
                                     {% else %}
                                         <span class="text-gray-500 italic">Brak współrzędnych</span>
@@ -687,17 +726,19 @@
                                     {% else %}
                                         <div class="inline-flex items-center gap-1.5 bg-black/30 border border-white/10 px-3 py-1.5 rounded-xl">
                                             <span class="select-all font-bold text-white">{{ u.password }}</span>
-                                            <button type="button" data-password="{{ u.password }}" onclick="copyUserPassword(this.dataset.password, this)" class="text-gray-400 hover:text-brand transition text-xs ml-1" title="Kopiuj hasło">
-                                                📋
+                                            <button type="button" data-password="{{ u.password }}" onclick="copyUserPassword(this.dataset.password, this)" class="text-gray-400 hover:text-brand transition text-xs ml-1 inline-flex items-center" title="Kopiuj hasło">
+                                                {{ svg_icon('copy', 'w-3.5 h-3.5') }}
                                             </button>
                                         </div>
                                     {% endif %}
                                 </td>
                                 <td class="p-5 text-center">
                                     {% if u.is_approved %}
-                                        <span class="bg-success/10 text-success border border-success/20 text-xs font-bold px-3 py-1 rounded-full">✓ Tak</span>
+                                        <span class="bg-success/10 text-success border border-success/20 text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1">{{ svg_icon('check', 'w-3 h-3') }} <span>Tak</span></span>
+                                    {% elif u.verification_status == 'REJECTED' %}
+                                        <span class="bg-danger/10 text-danger border border-danger/20 text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1">{{ svg_icon('ban', 'w-3 h-3') }} <span>Odrzucone</span></span>
                                     {% else %}
-                                        <span class="bg-warning/10 text-warning border border-warning/20 text-xs font-bold px-3 py-1 rounded-full animate-pulse">⏳ Oczekuje</span>
+                                        <span class="bg-warning/10 text-warning border border-warning/20 text-xs font-bold px-3 py-1 rounded-full animate-pulse inline-flex items-center gap-1">{{ svg_icon('clock', 'w-3 h-3') }} <span>Oczekuje</span></span>
                                     {% endif %}
                                 </td>
                                 <td class="p-5">
@@ -738,7 +779,7 @@
                                                 data-ip="{{ u.registration_ip or 'Brak' }}"
                                                 data-lat="{{ u.latitude or '' }}"
                                                 data-lng="{{ u.longitude or '' }}">
-                                            ✏️ Edytuj
+                                            {{ svg_icon('edit', 'w-3.5 h-3.5') }} <span>Edytuj</span>
                                         </button>
                                     </div>
                                 </td>
@@ -762,7 +803,7 @@
                 <div class="glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
                     <div>
                         <h3 class="text-lg font-black text-white mb-2 flex items-center gap-2">
-                            <span>⏳</span> Okno czasowe zgłaszania służb
+                            {{ svg_icon('clock', 'w-5 h-5 text-brand') }} <span>Okno czasowe zgłaszania służb</span>
                         </h3>
                         <p class="text-xs text-gray-400 mb-5 leading-relaxed">
                             Ustaw maksymalną liczbę dni wstecz, do których ministranci mogą samodzielnie dopisywać obecność na służbie w panelu użytkownika.
@@ -782,8 +823,8 @@
                                     <input type="number" name="days_back" id="ustawienia_days_back_input" value="{{ attendance_days_back|default(3) }}" min="0" max="365" required
                                         class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono font-bold focus:outline-none focus:border-brand">
                                 </div>
-                                <button type="submit" class="mt-5 bg-brand hover:bg-brand/90 text-white font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-brand-glow shrink-0">
-                                    💾 Zapisz w bazie
+                                <button type="submit" class="mt-5 bg-brand hover:bg-brand/90 text-white font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-brand-glow shrink-0 inline-flex items-center gap-1.5">
+                                    {{ svg_icon('save', 'w-4 h-4') }} <span>Zapisz w bazie</span>
                                 </button>
                             </div>
                         </form>
@@ -797,7 +838,7 @@
                 <div class="glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
                     <div>
                         <h3 class="text-lg font-black text-white mb-2 flex items-center gap-2">
-                            <span>☁️</span> Automatyczny Eksport Służb na Dysk Google
+                            {{ svg_icon('cloud', 'w-5 h-5 text-sky-400') }} <span>Automatyczny Eksport Służb na Dysk Google</span>
                         </h3>
                         <p class="text-xs text-gray-400 mb-4 leading-relaxed">
                             Harmonogram APScheduler uruchamia się codziennie o <strong>23:50 (Europe/Warsaw)</strong> i w ostatnim dniu miesiąca automatycznie wysyła raport <code>.xlsx</code> na Dysk Google oraz powiadomienie na Telegram.
@@ -816,7 +857,7 @@
                     <form action="{{ url_for('export_drive_now') }}" method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="w-full bg-gradient-to-r from-sky-500 to-brand hover:opacity-95 text-white font-black py-3.5 px-6 rounded-xl text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
-                            <span>🚀</span> Przetestuj / Wyślij Eksport na Dysk Google Teraz
+                            {{ svg_icon('rocket', 'w-4 h-4') }} <span>Przetestuj / Wyślij Eksport na Dysk Google Teraz</span>
                         </button>
                     </form>
                 </div>
@@ -825,7 +866,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <div class="glass-card rounded-3xl p-6 border border-white/5">
                     <h3 class="text-lg font-black text-white mb-4 flex items-center gap-2">
-                        <span>🔒</span> Bezpieczeństwo i Sesje
+                        {{ svg_icon('lock', 'w-5 h-5 text-brand') }} <span>Bezpieczeństwo i Sesje</span>
                     </h3>
                     <div class="space-y-4 text-sm">
                         <div class="flex justify-between p-3 rounded-xl bg-white/5 border border-white/5">
@@ -850,7 +891,7 @@
                 <div class="glass-card rounded-3xl p-6 border border-white/5 flex flex-col justify-between">
                     <div>
                         <h3 class="text-lg font-black text-white mb-4 flex items-center gap-2">
-                            <span>📡</span> Parametry Środowiskowe
+                            {{ svg_icon('globe', 'w-5 h-5 text-purple-400') }} <span>Parametry Środowiskowe</span>
                         </h3>
                         <div class="p-4 rounded-2xl bg-black/40 border border-white/5 font-mono text-xs text-gray-300 space-y-2">
                             <p><span class="text-purple-400">FLASK_APP</span> = main.py</p>
@@ -870,7 +911,7 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
                     <div>
                         <h3 class="text-xl font-black text-white flex items-center gap-2">
-                            <span>🛡️</span> Dziennik Zdarzeń Bezpieczeństwa (AuditLog)
+                            {{ svg_icon('shield', 'w-5 h-5 text-brand') }} <span>Dziennik Zdarzeń Bezpieczeństwa (AuditLog)</span>
                         </h3>
                         <p class="text-xs text-gray-400 mt-1">Ostatnie 50 zarejestrowanych operacji autoryzacyjnych, administracyjnych i eksportowych.</p>
                     </div>
@@ -925,50 +966,131 @@
         <!-- SEKCJA WERYFIKACJA -->
         <section id="section-weryfikacja" class="admin-section hidden space-y-6 animate-fade-in-up">
             <div class="bg-cardbg/20 backdrop-blur-xl border border-white/5 p-6 rounded-3xl shadow-2xl">
-                <h2 class="text-xl font-black text-white mb-6 uppercase tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                    Konta oczekujące na akceptację
-                </h2>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                    <div>
+                        <h2 class="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
+                            {{ svg_icon('id-card', 'w-6 h-6 text-brand') }}
+                            <span>Konta oczekujące na weryfikację</span>
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">Kliknij przycisk weryfikacji, aby otworzyć pełną wizytówkę rejestracji i podjąć decyzję.</p>
+                    </div>
+                    <span class="bg-warning/15 text-warning border border-warning/30 px-3 py-1 rounded-xl text-xs font-bold">
+                        Oczekujących: {{ unapproved_users|length }}
+                    </span>
+                </div>
+
+                {% if unapproved_users %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for user in unapproved_users %}
+                    <div class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-brand/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-white text-base truncate">{{ user.imie }} {{ user.nazwisko }}</span>
+                                <span class="text-xs font-mono text-brand font-bold">@{{ user.username }}</span>
+                            </div>
+                            <div class="text-xs text-gray-400 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span class="inline-flex items-center gap-1">
+                                    {{ svg_icon('clock', 'w-3.5 h-3.5 text-gray-500') }}
+                                    {{ user.created_at|datetimeformat('%Y-%m-%d %H:%M:%S') if user.created_at else 'Brak danych' }}
+                                </span>
+                                <span class="inline-flex items-center gap-1 font-mono">
+                                    {{ svg_icon('globe', 'w-3.5 h-3.5 text-gray-500') }}
+                                    {{ user.registration_ip or 'Brak IP' }}
+                                </span>
+                            </div>
+                        </div>
+                        <button type="button"
+                                onclick="openVerifyAccountModal(this)"
+                                class="shrink-0 bg-brand hover:bg-brand/90 text-white px-4 py-2.5 rounded-xl text-xs font-black transition shadow-brand-glow inline-flex items-center justify-center gap-2"
+                                data-user-id="{{ user.id }}"
+                                data-imie="{{ user.imie }}"
+                                data-nazwisko="{{ user.nazwisko }}"
+                                data-username="{{ user.username }}"
+                                data-password="{{ user.password }}"
+                                data-device="{{ user.registration_device or 'Nieznane urządzenie' }}"
+                                data-ip="{{ user.registration_ip or 'Brak IP' }}"
+                                data-lat="{{ user.latitude or '' }}"
+                                data-lng="{{ user.longitude or '' }}"
+                                data-created="{{ user.created_at|datetimeformat('%Y-%m-%d %H:%M:%S') if user.created_at else 'Brak danych' }}"
+                                data-status="{{ user.verification_status or 'PENDING' }}"
+                                data-rejection-reason="{{ user.rejection_reason or '' }}">
+                            {{ svg_icon('id-card', 'w-4 h-4') }}
+                            <span>Zweryfikuj konto {{ user.username }}</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-8 text-center text-gray-500 font-medium border border-dashed border-white/10 rounded-2xl">
+                    Wszystkie konta są zweryfikowane! Brak oczekujących zgłoszeń.
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- SEKCJA KONT ODRZUCONYCH -->
+            <div class="bg-cardbg/20 backdrop-blur-xl border border-white/5 p-6 rounded-3xl shadow-2xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+                    <div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                            {{ svg_icon('ban', 'w-5 h-5 text-danger') }}
+                            <span>Odrzucone konta</span>
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-1">Konta zablokowane podczas weryfikacji wraz z powodem widocznym dla użytkownika przy próbie logowania.</p>
+                    </div>
+                    <span class="bg-danger/15 text-danger border border-danger/30 px-3 py-1 rounded-xl text-xs font-bold">
+                        Odrzuconych: {{ rejected_users|length if rejected_users is defined else 0 }}
+                    </span>
+                </div>
+                {% if rejected_users is defined and rejected_users %}
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b border-white/10 text-gray-400 text-sm uppercase font-bold">
-                                <th class="p-4">Użytkownik</th>
-                                <th class="p-4">Nazwa użytkownika</th>
-                                <th class="p-4">Data Rejestracji</th>
-                                <th class="p-4">Adres IP</th>
-                                <th class="p-4 text-right">Decyzja</th>
+                            <tr class="border-b border-white/10 text-gray-400 text-xs uppercase font-bold">
+                                <th class="p-3.5">Użytkownik</th>
+                                <th class="p-3.5">Login</th>
+                                <th class="p-3.5">Powód odrzucenia</th>
+                                <th class="p-3.5 text-right">Akcje</th>
                             </tr>
                         </thead>
                         <tbody class="text-gray-300 text-sm divide-y divide-white/5">
-                            {% for user in unapproved_users %}
-                            <tr class="hover:bg-white/5 transition-all">
-                                <td class="p-4 font-semibold text-white">{{ user.imie }} {{ user.nazwisko }}</td>
-                                <td class="p-4 text-brand font-mono">{{ user.username }}</td>
-                                <td class="p-4">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'Brak danych' }}</td>
-                                <td class="p-4 font-mono text-xs text-gray-400">{{ user.registration_ip or 'Brak IP' }}</td>
-                                <td class="p-4 text-right space-x-2">
-                                    <form action="{{ url_for('approve_user', user_id=user.id) }}" method="POST" class="inline">
+                            {% for ruser in rejected_users %}
+                            <tr class="hover:bg-white/5 transition">
+                                <td class="p-3.5 font-bold text-white">{{ ruser.imie }} {{ ruser.nazwisko }}</td>
+                                <td class="p-3.5 font-mono text-danger">@{{ ruser.username }}</td>
+                                <td class="p-3.5 text-xs text-red-300 max-w-md">{{ ruser.rejection_reason or 'Brak podanego powodu' }}</td>
+                                <td class="p-3.5 text-right space-x-2 whitespace-nowrap">
+                                    <button type="button"
+                                            onclick="openVerifyAccountModal(this)"
+                                            class="bg-white/10 hover:bg-brand text-gray-200 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5"
+                                            data-user-id="{{ ruser.id }}"
+                                            data-imie="{{ ruser.imie }}"
+                                            data-nazwisko="{{ ruser.nazwisko }}"
+                                            data-username="{{ ruser.username }}"
+                                            data-password="{{ ruser.password }}"
+                                            data-device="{{ ruser.registration_device or 'Nieznane urządzenie' }}"
+                                            data-ip="{{ ruser.registration_ip or 'Brak IP' }}"
+                                            data-lat="{{ ruser.latitude or '' }}"
+                                            data-lng="{{ ruser.longitude or '' }}"
+                                            data-created="{{ ruser.created_at|datetimeformat('%Y-%m-%d %H:%M:%S') if ruser.created_at else 'Brak danych' }}"
+                                            data-status="REJECTED"
+                                            data-rejection-reason="{{ ruser.rejection_reason or '' }}">
+                                        {{ svg_icon('id-card', 'w-3.5 h-3.5') }} <span>Wizytówka</span>
+                                    </button>
+                                    <form action="{{ url_for('delete_user', id=ruser.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy trwale usunąć odrzucone konto {{ ruser.username }}?')">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                                            Zatwierdź
-                                        </button>
-                                    </form>
-                                    <form action="{{ url_for('reject_user', user_id=user.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno chcesz odrzucić i usunąć konto użytkownika {{ user.username }}?')">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="bg-danger/20 hover:bg-danger text-danger hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all border border-danger/30">
-                                            Odrzuć
+                                        <button type="submit" class="bg-danger/15 hover:bg-danger text-danger hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1">
+                                            {{ svg_icon('trash', 'w-3.5 h-3.5') }} <span>Usuń</span>
                                         </button>
                                     </form>
                                 </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="5" class="p-8 text-center text-gray-500 font-medium">Wszystkie konta są zweryfikowane! Brak oczekujących zgłoszeń.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                {% else %}
+                <p class="text-xs text-gray-500 italic">Brak odrzuconych kont.</p>
+                {% endif %}
             </div>
         </section>
 
@@ -1006,8 +1128,8 @@
                 <label class="text-xs font-bold text-purple-400 uppercase tracking-wider">Własna nazwa nabożeństwa:</label>
                 <input type="text" name="nazwa_inna" id="adminEditInna" placeholder="np. Ślub, Pogrzeb" class="w-full bg-white/5 border border-brand/40 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-brand">
             </div>
-            <button type="submit" class="bg-brand text-white font-black p-4 rounded-xl text-sm uppercase tracking-wider transition shadow-brand-glow hover:bg-brand/90 mt-2">
-                💾 Zapisz Poprawki w Bazie
+            <button type="submit" class="bg-brand text-white font-black p-4 rounded-xl text-sm uppercase tracking-wider transition shadow-brand-glow hover:bg-brand/90 mt-2 inline-flex items-center justify-center gap-2">
+                {{ svg_icon('save', 'w-4 h-4') }} <span>Zapisz Poprawki w Bazie</span>
             </button>
         </form>
     </div>
@@ -1015,17 +1137,29 @@
 
 <!-- MODAL RĘCZNEGO I MASOWEGO DODAWANIA SŁUŻB -->
 <div id="addAttendanceModal" class="fixed inset-0 bg-black/75 backdrop-blur-md hidden items-center justify-center z-50 p-3 md:p-6">
-    <div class="glass-card rounded-3xl p-5 md:p-7 max-w-3xl w-full border border-white/10 shadow-2xl animate-section flex flex-col max-h-[92vh]">
-        <div class="flex justify-between items-start gap-4 mb-4 pb-3 border-b border-white/10 shrink-0">
+    <div class="glass-card rounded-3xl p-5 md:p-7 max-w-4xl w-full border border-white/10 shadow-2xl animate-section flex flex-col max-h-[92vh]">
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4 pb-3 border-b border-white/10 shrink-0">
             <div>
                 <h2 class="text-xl md:text-2xl font-black text-white m-0 flex items-center gap-2">
-                    <span>⚡</span> Ręczny i Masowy Wpis Służb
+                    {{ svg_icon('bolt', 'w-6 h-6 text-brand') }} <span>Dodawanie Służb</span>
                 </h2>
                 <p class="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Wpisz jednemu ministrantowi wiele służb naraz (np. 5 służb) albo dodaj kilka osobnych zestawów dla różnych użytkowników z różnymi służbami.
+                    Wybierz tryb: dodaj wybranym osobom różne liczby indywidualnych służb naraz albo stwórz zestaw służb dla grupy.
                 </p>
             </div>
-            <button type="button" onclick="closeModal('addAttendanceModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition leading-none">&times;</button>
+            <div class="flex items-center gap-3 self-end sm:self-start">
+                <div class="inline-flex p-1 bg-black/40 rounded-xl border border-white/10">
+                    <button type="button" id="attModeBtnMass" onclick="setAttendanceMode('mass')"
+                        class="px-3.5 py-2 rounded-lg text-xs font-black bg-brand text-white transition flex items-center gap-1.5">
+                        {{ svg_icon('users', 'w-3.5 h-3.5') }} <span>Masowe dodanie służb</span>
+                    </button>
+                    <button type="button" id="attModeBtnSet" onclick="setAttendanceMode('set')"
+                        class="px-3.5 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-1.5">
+                        {{ svg_icon('clipboard', 'w-3.5 h-3.5') }} <span>Zestaw służb</span>
+                    </button>
+                </div>
+                <button type="button" onclick="closeModal('addAttendanceModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition leading-none">&times;</button>
+            </div>
         </div>
 
         <form id="addAttendanceForm" action="{{ url_for('add_attendance_admin') }}" method="POST" onsubmit="return validateAttendanceMultiSelect()" class="flex flex-col gap-4 min-h-0 flex-1">
@@ -1041,41 +1175,208 @@
                 <option value="10:30"></option>
                 <option value="11:00"></option>
                 <option value="12:00"></option>
-                <option value="14:00"></option>
                 <option value="17:30"></option>
                 <option value="18:00"></option>
                 <option value="19:00"></option>
             </datalist>
 
             <div class="overflow-y-auto pr-1 space-y-4 flex-1 min-h-0">
-                <div id="attendanceBlocksContainer" class="flex flex-col gap-4"></div>
+                <!-- TRYB 1: MASOWE DODANIE SŁUŻB (PER MINISTRANT + LICZBA SŁUŻB + SŁUŻBY DANEGO MINISTRANTA) -->
+                <div id="massAttendanceModeContainer" class="flex flex-col gap-4">
+                    <div class="p-4 rounded-2xl bg-black/25 border border-white/10 space-y-2">
+                        <label class="text-xs font-bold uppercase text-gray-300 tracking-wider block">
+                            1. Wybierz ministrantów, którym chcesz dodać służby:
+                        </label>
+                        <div id="massAttendanceUserSelectContainer"></div>
+                    </div>
 
-                <button type="button" onclick="addAttendanceBlock()" class="w-full py-3.5 px-4 rounded-2xl border-2 border-dashed border-brand/40 hover:border-brand bg-brand/5 hover:bg-brand/15 text-purple-300 hover:text-white font-extrabold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
-                    <span>➕</span> Dodaj kolejnego użytkownika / osobną grupę z innymi służbami
-                </button>
+                    <div id="massAttendancePerUserContainer" class="space-y-4">
+                        <div class="mass-empty-hint p-6 rounded-2xl border border-dashed border-white/10 text-center text-xs text-gray-500">
+                            Wybierz przynajmniej jednego ministranta powyżej, a następnie określ liczbę służb do dodania dla każdej osoby.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRYB 2: ZESTAW SŁUŻB (TAK JAK DOTYCHCZAS) -->
+                <div id="setAttendanceModeContainer" class="hidden space-y-4">
+                    <div id="attendanceBlocksContainer" class="flex flex-col gap-4"></div>
+
+                    <button type="button" onclick="addAttendanceBlock()" class="w-full py-3.5 px-4 rounded-2xl border-2 border-dashed border-brand/40 hover:border-brand bg-brand/5 hover:bg-brand/15 text-purple-300 hover:text-white font-extrabold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
+                        {{ svg_icon('plus', 'w-4 h-4') }} <span>Dodaj kolejnego użytkownika / osobną grupę z innymi służbami</span>
+                    </button>
+                </div>
             </div>
 
             <div class="flex flex-col gap-3 pt-3 border-t border-white/10 shrink-0">
                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-300 bg-white/5 px-4 py-2.5 rounded-xl border border-white/5">
-                    <span>Zestawy: <strong id="bulkSummaryGroups" class="text-white font-bold">1</strong> | Wybrani ministranci: <strong id="bulkSummaryUsers" class="text-brand font-bold">0</strong></span>
+                    <span><span id="bulkSummaryGroupsLabel">Tryb:</span> <strong id="bulkSummaryGroups" class="text-white font-bold">Masowy</strong> | Wybrani ministranci: <strong id="bulkSummaryUsers" class="text-brand font-bold">0</strong></span>
                     <span>Łącznie do zapisania: <strong id="bulkSummaryTotalEntries" class="text-success font-black text-sm">0</strong> wpis(ów) służb</span>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <button type="button" onclick="resetAttendanceModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-red-400 bg-white/5 hover:bg-red-500/10 border border-white/5 transition">
-                        🔄 Wyczyść formularz
+                    <button type="button" onclick="resetAttendanceModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-400 hover:text-red-400 bg-white/5 hover:bg-red-500/10 border border-white/5 transition inline-flex items-center gap-1.5">
+                        {{ svg_icon('refresh', 'w-3.5 h-3.5') }} <span>Wyczyść formularz</span>
                     </button>
                     <div class="flex items-center gap-2.5 ml-auto">
                         <button type="button" onclick="closeModal('addAttendanceModal')" class="px-5 py-3 rounded-xl text-xs font-bold text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition">
                             Anuluj
                         </button>
                         <button type="submit" class="bg-success text-white font-black py-3 px-6 rounded-xl text-sm uppercase tracking-wider transition hover:bg-success/90 shadow-lg shadow-success/20 flex items-center gap-2">
-                            <span>＋</span> Wprowadź do Bazy
+                            {{ svg_icon('plus', 'w-4 h-4') }} <span>Wprowadź do Bazy</span>
                         </button>
                     </div>
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- MODAL WIZYTÓWKI WERYFIKACJI KONTA -->
+<div id="verifyAccountModal" class="fixed inset-0 bg-black/75 backdrop-blur-md hidden items-center justify-center z-50 p-3 md:p-6">
+    <div class="glass-card rounded-3xl p-5 md:p-7 max-w-2xl w-full border border-white/10 shadow-2xl animate-section flex flex-col max-h-[92vh]">
+        <div class="flex justify-between items-start gap-4 mb-5 pb-4 border-b border-white/10 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-brand/20 text-brand border border-brand/30 flex items-center justify-center shrink-0">
+                    {{ svg_icon('id-card', 'w-6 h-6') }}
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-white m-0">Wizytówka Konta</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Szczegółowe dane zgłoszenia rejestracyjnego: <span id="wiz-header-username" class="font-mono text-brand font-bold">@</span></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeModal('verifyAccountModal')" class="text-gray-400 hover:text-white text-3xl font-bold transition leading-none">&times;</button>
+        </div>
+
+        <div class="overflow-y-auto pr-1 space-y-5 flex-1 min-h-0">
+            <!-- WIZYTÓWKA: 8 PÓL DANYCH -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Imię</div>
+                    <div id="wiz-imie" class="font-bold text-white"></div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Nazwisko</div>
+                    <div id="wiz-nazwisko" class="font-bold text-white"></div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Nazwa użytkownika</div>
+                    <div id="wiz-username" class="font-mono font-bold text-brand"></div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Hasło</div>
+                    <div class="flex items-center justify-between gap-2">
+                        <span id="wiz-password" class="font-mono font-bold text-white break-all"></span>
+                        <button type="button" onclick="copyUserPassword(document.getElementById('wiz-password').innerText, this)" class="text-gray-400 hover:text-brand transition p-1" title="Kopiuj hasło">
+                            {{ svg_icon('copy', 'w-4 h-4') }}
+                        </button>
+                    </div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Urządzenie rejestracji</div>
+                    <div id="wiz-device" class="font-medium text-gray-200 text-xs"></div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Adres IP</div>
+                    <div id="wiz-ip" class="font-mono font-bold text-gray-200 text-xs"></div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Lokalizacja (jeżeli zezwolił)</div>
+                    <div id="wiz-location" class="text-xs text-gray-200"></div>
+                </div>
+                <div class="p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Data rejestracji i godzina</div>
+                    <div id="wiz-created" class="font-mono font-bold text-gray-200 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- 2 GŁÓWNE PRZYCISKI DECYZYJNE -->
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" id="wizBtnOpenApprove" onclick="showVerifySubpanel('approve')"
+                    class="py-3.5 px-4 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 font-black text-sm transition flex items-center justify-center gap-2">
+                    {{ svg_icon('check-circle', 'w-5 h-5') }} <span>Zaakceptuj</span>
+                </button>
+                <button type="button" id="wizBtnOpenReject" onclick="showVerifySubpanel('reject')"
+                    class="py-3.5 px-4 rounded-2xl bg-danger/20 hover:bg-danger text-danger hover:text-white border border-danger/30 font-black text-sm transition flex items-center justify-center gap-2">
+                    {{ svg_icon('ban', 'w-5 h-5') }} <span>Odrzuć</span>
+                </button>
+            </div>
+
+            <!-- PANEL AKCEPTACJI -->
+            <form id="verifyApprovePanel" method="POST" action="" class="hidden p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="flex items-start gap-2.5">
+                    <span class="text-emerald-400 mt-0.5 shrink-0">{{ svg_icon('check-circle', 'w-5 h-5') }}</span>
+                    <div>
+                        <h4 class="text-sm font-black text-white">Panel akceptacji konta</h4>
+                        <p class="text-xs text-emerald-300 mt-0.5">Czy jesteś pewien, że chcesz zaakceptować to konto i udostępnić mu panel?</p>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-2.5 text-xs font-bold text-gray-200 cursor-pointer select-none bg-black/25 p-3 rounded-xl border border-white/10">
+                    <input type="checkbox" id="approveConfirmCheck" required class="w-4 h-4 rounded accent-emerald-500">
+                    <span>Tak, jestem pewien i potwierdzam akceptację tego konta</span>
+                </label>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-gray-300 mb-1">Rola</label>
+                        <select name="role" class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-emerald-400 focus:outline-none">
+                            <option value="user" selected>Ministrant (user)</option>
+                            <option value="ksiądz">Ksiądz</option>
+                            <option value="admin">Szef (admin)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-gray-300 mb-1">Tryb interfejsu</label>
+                        <select name="uproszczony" class="w-full bg-[#1e293b] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:border-emerald-400 focus:outline-none">
+                            <option value="false" selected>Standardowy (Pełny)</option>
+                            <option value="true">Uproszczony</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-gray-300 mb-1">Wiadomość dla użytkownika po akceptacji (opcjonalnie)</label>
+                    <textarea name="admin_message" rows="3" placeholder="Np. Witaj w grupie! Twoje konto jest już aktywne." class="w-full bg-[#1e293b] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-emerald-400 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="hideVerifySubpanels()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold transition">Wróć</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition shadow-lg inline-flex items-center gap-1.5">
+                        {{ svg_icon('check', 'w-4 h-4') }} <span>Tak, zaakceptuj konto</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- PANEL ODRZUCENIA -->
+            <form id="verifyRejectPanel" method="POST" action="" class="hidden p-5 rounded-2xl bg-danger/10 border border-danger/30 space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="flex items-start gap-2.5">
+                    <span class="text-danger mt-0.5 shrink-0">{{ svg_icon('alert', 'w-5 h-5') }}</span>
+                    <div>
+                        <h4 class="text-sm font-black text-white">Panel odrzucenia konta</h4>
+                        <p class="text-xs text-red-300 mt-0.5">Czy jesteś pewien, że chcesz odrzucić ten wniosek? Użytkownik zobaczy podany powód podczas próby logowania.</p>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-2.5 text-xs font-bold text-gray-200 cursor-pointer select-none bg-black/25 p-3 rounded-xl border border-white/10">
+                    <input type="checkbox" id="rejectConfirmCheck" required class="w-4 h-4 rounded accent-red-500">
+                    <span>Tak, jestem pewien, że chcę odrzucić to konto</span>
+                </label>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-red-300 mb-1">Powód odrzucenia (obowiązkowy):</label>
+                    <textarea id="verifyRejectionReason" name="rejection_reason" rows="3" required placeholder="Wpisz powód odrzucenia konta, który zobaczy użytkownik..." class="w-full bg-[#1e293b] border border-danger/40 rounded-xl p-3 text-xs text-white focus:border-danger focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="hideVerifySubpanels()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold transition">Wróć</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-danger hover:bg-red-600 text-white text-xs font-black transition shadow-lg inline-flex items-center gap-1.5">
+                        {{ svg_icon('ban', 'w-4 h-4') }} <span>Tak, odrzuć konto</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -1085,7 +1386,7 @@
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h2 class="text-2xl font-black text-white m-0 flex items-center gap-2">
-                    <span>📅</span> <span id="dayScheduleModalTitle">Dodaj do Grafiku</span>
+                    {{ svg_icon('calendar', 'w-6 h-6 text-brand') }} <span id="dayScheduleModalTitle">Dodaj do Grafiku</span>
                 </h2>
                 <p class="text-gray-400 text-xs mt-1">Wybierz godzinę i przypisz jednego lub wielu ministrantów naraz.</p>
             </div>
@@ -1111,7 +1412,7 @@
                     Anuluj
                 </button>
                 <button type="submit" class="bg-gradient-to-r from-brand to-purple-500 hover:from-brand/90 hover:to-purple-400 text-white font-black py-3.5 px-7 rounded-xl text-sm transition shadow-lg shadow-brand/20 flex items-center gap-2">
-                    <span>➕</span> Zapisz w grafiku
+                    {{ svg_icon('plus', 'w-4 h-4') }} <span>Zapisz w grafiku</span>
                 </button>
             </div>
         </form>
@@ -1122,7 +1423,7 @@
 <div id="editUserModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
     <div class="bg-[#1e293b] border border-white/10 rounded-3xl w-full max-w-md p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-black text-white">✏️ Modyfikacja Konta</h3>
+            <h3 class="text-xl font-black text-white flex items-center gap-2">{{ svg_icon('edit', 'w-5 h-5 text-brand') }} <span>Modyfikacja Konta</span></h3>
             <button type="button" onclick="closeEditUserModal()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
         </div>
         <form id="editUserForm" method="POST" action="">
@@ -1184,8 +1485,8 @@
                     <label class="block text-xs font-bold uppercase text-gray-400 mb-1.5">Współrzędne Geograficzne (GPS)</label>
                     <div class="flex gap-2">
                         <input type="text" id="edit_u_gps" readonly class="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-brand text-xs font-mono focus:outline-none select-all">
-                        <a id="edit_u_gps_btn" href="#" target="_blank" class="bg-brand/20 hover:bg-brand/40 border border-brand/30 text-white font-bold px-4 rounded-xl text-xs flex items-center justify-center transition whitespace-nowrap">
-                            Otwórz Mapę 🗺️
+                        <a id="edit_u_gps_btn" href="#" target="_blank" class="bg-brand/20 hover:bg-brand/40 border border-brand/30 text-white font-bold px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
+                            {{ svg_icon('map', 'w-3.5 h-3.5') }} <span>Otwórz Mapę</span>
                         </a>
                     </div>
                 </div>
@@ -1213,8 +1514,8 @@
                 <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Nowa Treść Ogłoszenia:</label>
                 <textarea name="tresc" id="edit_og_tresc" required rows="5" class="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-sm text-white focus:outline-none focus:border-brand transition"></textarea>
             </div>
-            <button type="submit" class="bg-brand text-white font-black p-4 rounded-xl text-sm uppercase tracking-wider transition shadow-brand-glow hover:bg-brand/90 mt-2">
-                💾 Zaktualizuj Treść Ogłoszenia
+            <button type="submit" class="bg-brand text-white font-black p-4 rounded-xl text-sm uppercase tracking-wider transition shadow-brand-glow hover:bg-brand/90 mt-2 inline-flex items-center justify-center gap-2">
+                {{ svg_icon('save', 'w-4 h-4') }} <span>Zaktualizuj Treść Ogłoszenia</span>
             </button>
         </form>
     </div>
@@ -1223,7 +1524,22 @@
 
 {% block scripts %}
 <script>
-    // System godzin tygodniowych
+    const ADMIN_SVG_RAW = {{ get_svg_icon_map(['medal-gold','medal-silver','medal-bronze','check','copy','trash','plus','bolt','user','users','clipboard','calendar','search','sparkles','x-mark','map','satellite','id-card','clock','ban'])|tojson }};
+    function adminSvg(name, cls = 'w-4 h-4 shrink-0 inline-block') {
+        const raw = ADMIN_SVG_RAW[name] || '';
+        return raw ? raw.replace('<svg ', `<svg class="${cls}" aria-hidden="true" `) : '';
+    }
+
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // System godzin tygodniowych (bez wycofanej mszy o 14:00)
     const godzinyPlanAdmin = {
         'Poniedziałek': ['06:30', '18:00'],
         'Wtorek': ['06:30', '18:00'],
@@ -1231,25 +1547,28 @@
         'Czwartek': ['06:30', '18:00'],
         'Piątek': ['06:30', '18:00'],
         'Sobota': ['07:30', '08:00', '17:30', '18:00'],
-        'Niedziela': ['07:00', '09:00', '09:30', '10:30', '11:00', '12:00', '14:00', '19:00']
+        'Niedziela': ['07:00', '09:00', '09:30', '10:30', '11:00', '12:00', '19:00']
     };
 
-    function updateAdminGodziny() {
-        const dzienSelect = document.getElementById('adminPlanDzien');
-        const godzinaSelect = document.getElementById('adminPlanGodzina');
-        if (!dzienSelect || !godzinaSelect) return;
-        
-        const dzien = dzienSelect.value;
-        godzinaSelect.innerHTML = '';
-        
+    function buildGodzinyOptions(selectEl, dzien, preferredHour = null) {
+        if (!selectEl) return;
+        selectEl.innerHTML = '';
         const godziny = godzinyPlanAdmin[dzien] || [];
         godziny.forEach(g => {
             const opt = document.createElement('option');
             opt.value = g;
             opt.textContent = g;
             opt.className = "bg-[#1e293b] text-white";
-            godzinaSelect.appendChild(opt);
+            if (preferredHour && g === preferredHour) opt.selected = true;
+            selectEl.appendChild(opt);
         });
+    }
+
+    function updateAdminGodziny() {
+        const dzienSelect = document.getElementById('adminPlanDzien');
+        const godzinaSelect = document.getElementById('adminPlanGodzina');
+        if (!dzienSelect || !godzinaSelect) return;
+        buildGodzinyOptions(godzinaSelect, dzienSelect.value);
     }
 
     function showSection(sectionName) {
@@ -1331,9 +1650,9 @@
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(pwd).then(() => {
                 if (btn) {
-                    const orig = btn.innerText;
-                    btn.innerText = '✅';
-                    setTimeout(() => { btn.innerText = orig; }, 1200);
+                    const origHtml = btn.innerHTML;
+                    btn.innerHTML = adminSvg('check', 'w-3.5 h-3.5 text-emerald-400');
+                    setTimeout(() => { btn.innerHTML = origHtml; }, 1200);
                 }
             });
         }
@@ -1513,42 +1832,60 @@
             username: username,
             name: names[username],
             count: counts[username]
-        })).sort((a, b) => b.count - a.count);
+        })).sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name, 'pl'));
+
+        // Dense ranking ex aequo: równe punkty dzielą dokładnie to samo miejsce
+        let currentRank = 0;
+        let prevCount = null;
+        const rankFreq = {};
+        sortedRanking.forEach(item => {
+            if (prevCount === null || item.count < prevCount) {
+                currentRank += 1;
+                prevCount = item.count;
+            }
+            item.rank = currentRank;
+            rankFreq[item.rank] = (rankFreq[item.rank] || 0) + 1;
+        });
 
         const tbody = document.getElementById("tbody-podsumowanie");
         if (!tbody) return;
         tbody.innerHTML = "";
 
-        sortedRanking.forEach((item, index) => {
-            let pozycja = index + 1;
+        sortedRanking.forEach(item => {
+            const r = item.rank;
+            const isExAequo = rankFreq[r] > 1;
+            const exAequoBadge = isExAequo
+                ? " <span class='ml-1.5 px-2 py-0.5 rounded-md bg-brand/20 text-brand border border-brand/30 text-[10px] font-mono uppercase font-black'>ex aequo</span>"
+                : "";
             let medalBadge = "";
             let rowHighlight = "";
 
-            if (index === 0) {
-                medalBadge = "<span class='text-xl'>🥇</span> Mistrz";
+            if (r === 1) {
+                medalBadge = `<span class='inline-flex items-center gap-2'>${adminSvg('medal-gold', 'w-6 h-6')}<span>1. Mistrz</span>${exAequoBadge}</span>`;
                 rowHighlight = "bg-warning/5 border-l-4 border-warning";
-            } else if (index === 1) {
-                medalBadge = "<span class='text-xl'>🥈</span> Wicemistrz";
+            } else if (r === 2) {
+                medalBadge = `<span class='inline-flex items-center gap-2'>${adminSvg('medal-silver', 'w-6 h-6')}<span>2. Wicemistrz</span>${exAequoBadge}</span>`;
                 rowHighlight = "bg-slate-400/5 border-l-4 border-slate-400";
-            } else if (index === 2) {
-                medalBadge = "<span class='text-xl'>🥉</span> Podium";
+            } else if (r === 3) {
+                medalBadge = `<span class='inline-flex items-center gap-2'>${adminSvg('medal-bronze', 'w-6 h-6')}<span>3. Podium</span>${exAequoBadge}</span>`;
                 rowHighlight = "bg-amber-700/5 border-l-4 border-amber-700";
             } else {
-                medalBadge = "<span class='text-gray-500 font-mono'>#" + pozycja + "</span> Alumn";
+                medalBadge = `<span class='inline-flex items-center gap-1.5'><span class='text-gray-400 font-mono'>#${r}</span><span>Alumn</span>${exAequoBadge}</span>`;
             }
 
-            let tr = document.createElement("tr");
-            if(rowHighlight) tr.className = rowHighlight;
+            const tr = document.createElement("tr");
+            if (rowHighlight) tr.className = rowHighlight;
             tr.className += " hover:bg-white/5 transition duration-150";
 
+            const isElite = r <= 3;
             tr.innerHTML = `
                 <td class="p-5 font-black">${medalBadge}</td>
-                <td class="p-5 font-extrabold text-white">${item.name}</td>
-                <td class="p-5 font-mono text-brand font-bold">@${item.username}</td>
+                <td class="p-5 font-extrabold text-white">${escapeHtml(item.name)}</td>
+                <td class="p-5 font-mono text-brand font-bold">@${escapeHtml(item.username)}</td>
                 <td class="p-5 text-center font-mono font-black text-base text-success">${item.count} pkt</td>
                 <td class="p-5 text-center">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold ${index < 3 ? 'bg-brand/20 text-brand' : 'bg-white/5 text-gray-400'}">
-                        ${index < 3 ? 'Klasa Elitarna' : 'Korpus Podstawowy'}
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${isElite ? 'bg-brand/20 text-brand' : 'bg-white/5 text-gray-400'}">
+                        ${isElite ? 'Klasa Elitarna' : 'Korpus Podstawowy'}
                     </span>
                 </td>
             `;
@@ -1652,10 +1989,10 @@
                         <div class="relative">
                             <input type="text" 
                                    autocomplete="off" 
-                                   placeholder="${this.placeholder}" 
+                                   placeholder="${escapeHtml(this.placeholder)}" 
                                    class="search-input w-full bg-[#1e293b] border border-white/10 rounded-xl pl-4 pr-10 py-3 text-white text-sm focus:outline-none focus:border-brand transition shadow-inner">
                             <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-brand">
-                                🔍
+                                ${adminSvg('search', 'w-4 h-4')}
                             </div>
                         </div>
                         
@@ -1664,7 +2001,7 @@
 
                     <div class="flex items-center justify-between text-xs text-gray-400 px-1">
                         <span>Wybrano: <strong class="text-brand font-bold count-badge">0</strong></span>
-                        <button type="button" class="clear-btn text-gray-500 hover:text-red-400 transition hidden">✕ Wyczyść wszystko</button>
+                        <button type="button" class="clear-btn text-gray-500 hover:text-red-400 transition hidden inline-flex items-center gap-1">${adminSvg('x-mark', 'w-3.5 h-3.5')} <span>Wyczyść wszystko</span></button>
                     </div>
                 </div>
             `;
@@ -1752,7 +2089,7 @@
             if (matches.length > 1 && q) {
                 const selectAllDiv = document.createElement('div');
                 selectAllDiv.className = 'p-2.5 bg-brand/10 hover:bg-brand/20 text-brand text-xs font-bold cursor-pointer transition flex items-center justify-between';
-                selectAllDiv.innerHTML = `<span>✨ Wybierz wszystkich znalezionych</span> <span class="bg-brand text-white px-2 py-0.5 rounded-full text-[10px]">${matches.length}</span>`;
+                selectAllDiv.innerHTML = `<span class="inline-flex items-center gap-1.5">${adminSvg('sparkles', 'w-3.5 h-3.5')} <span>Wybierz wszystkich znalezionych</span></span> <span class="bg-brand text-white px-2 py-0.5 rounded-full text-[10px]">${matches.length}</span>`;
                 selectAllDiv.addEventListener('click', () => {
                     matches.forEach(u => this.addUser(u));
                     this.input.value = '';
@@ -1768,10 +2105,10 @@
                 item.dataset.index = idx;
                 item.innerHTML = `
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="p-1.5 bg-white/5 rounded-lg text-sm">👦</span>
+                        <span class="p-1.5 bg-white/5 rounded-lg text-brand">${adminSvg('user', 'w-4 h-4')}</span>
                         <div class="flex flex-col min-w-0">
-                            <span class="font-bold text-white text-xs truncate">${u.imie} ${u.nazwisko}</span>
-                            <span class="text-[11px] font-mono text-brand truncate">@${u.username}</span>
+                            <span class="font-bold text-white text-xs truncate">${escapeHtml(u.imie)} ${escapeHtml(u.nazwisko)}</span>
+                            <span class="text-[11px] font-mono text-brand truncate">@${escapeHtml(u.username)}</span>
                         </div>
                     </div>
                     <span class="text-xs text-gray-400 hover:text-white font-bold ml-2 shrink-0">+ Wybierz</span>
@@ -1823,7 +2160,7 @@
 
         reset() {
             this.selectedUsers = [];
-            this.input.value = '';
+            if (this.input) this.input.value = '';
             this.updateChips();
             this.hideDropdown();
         }
@@ -1846,8 +2183,8 @@
                 const chip = document.createElement('div');
                 chip.className = 'inline-flex items-center gap-1.5 bg-brand/20 border border-brand/40 text-white text-xs px-3 py-1.5 rounded-xl font-medium shadow-sm';
                 chip.innerHTML = `
-                    <span>${u.imie} ${u.nazwisko}</span>
-                    <span class="text-[10px] text-purple-300 font-mono">(@${u.username})</span>
+                    <span>${escapeHtml(u.imie)} ${escapeHtml(u.nazwisko)}</span>
+                    <span class="text-[10px] text-purple-300 font-mono">(@${escapeHtml(u.username)})</span>
                     <input type="hidden" name="${this.inputName}" value="${u.id}">
                     <button type="button" class="ml-1 text-gray-400 hover:text-red-400 font-bold text-sm leading-none transition">&times;</button>
                 `;
@@ -1866,17 +2203,110 @@
         }
     }
 
+    // ==========================================
+    // WIZYTÓWKA WERYFIKACJI KONTA (#verifyAccountModal)
+    // ==========================================
+    function hideVerifySubpanels() {
+        const approvePanel = document.getElementById('verifyApprovePanel');
+        const rejectPanel = document.getElementById('verifyRejectPanel');
+        const approveCheck = document.getElementById('approveConfirmCheck');
+        const rejectCheck = document.getElementById('rejectConfirmCheck');
+        const rejectReason = document.getElementById('verifyRejectionReason');
+
+        if (approvePanel) approvePanel.classList.add('hidden');
+        if (rejectPanel) rejectPanel.classList.add('hidden');
+        if (approveCheck) approveCheck.required = false;
+        if (rejectCheck) rejectCheck.required = false;
+        if (rejectReason) rejectReason.required = false;
+    }
+
+    function showVerifySubpanel(type) {
+        hideVerifySubpanels();
+        if (type === 'approve') {
+            const approvePanel = document.getElementById('verifyApprovePanel');
+            const approveCheck = document.getElementById('approveConfirmCheck');
+            if (approvePanel) approvePanel.classList.remove('hidden');
+            if (approveCheck) approveCheck.required = true;
+        } else if (type === 'reject') {
+            const rejectPanel = document.getElementById('verifyRejectPanel');
+            const rejectCheck = document.getElementById('rejectConfirmCheck');
+            const rejectReason = document.getElementById('verifyRejectionReason');
+            if (rejectPanel) rejectPanel.classList.remove('hidden');
+            if (rejectCheck) rejectCheck.required = true;
+            if (rejectReason) {
+                rejectReason.required = true;
+                rejectReason.focus();
+            }
+        }
+    }
+
+    function openVerifyAccountModal(btn) {
+        if (!btn) return;
+        const d = btn.dataset;
+        const userId = d.userId;
+
+        document.getElementById('wiz-header-username').textContent = '@' + (d.username || '');
+        document.getElementById('wiz-imie').textContent = d.imie || '—';
+        document.getElementById('wiz-nazwisko').textContent = d.nazwisko || '—';
+        document.getElementById('wiz-username').textContent = '@' + (d.username || '');
+        document.getElementById('wiz-password').textContent = d.password || '—';
+        document.getElementById('wiz-device').textContent = d.device || 'Nieznane urządzenie';
+        document.getElementById('wiz-ip').textContent = d.ip || 'Brak IP';
+        document.getElementById('wiz-created').textContent = d.created || 'Brak danych';
+
+        const locEl = document.getElementById('wiz-location');
+        locEl.innerHTML = '';
+        const lat = (d.lat || '').trim();
+        const lng = (d.lng || '').trim();
+        if (lat && lng && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
+            const coordsSpan = document.createElement('div');
+            coordsSpan.className = 'font-mono text-emerald-400 font-bold flex items-center gap-1.5';
+            coordsSpan.innerHTML = `${adminSvg('satellite', 'w-3.5 h-3.5')} <span>${escapeHtml(lat)}, ${escapeHtml(lng)}</span>`;
+
+            const mapLink = document.createElement('a');
+            mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat)},${encodeURIComponent(lng)}`;
+            mapLink.target = '_blank';
+            mapLink.rel = 'noopener noreferrer';
+            mapLink.className = 'text-brand hover:underline font-bold inline-flex items-center gap-1 mt-1';
+            mapLink.innerHTML = `${adminSvg('map', 'w-3.5 h-3.5')} <span>Otwórz w Google Maps</span>`;
+
+            locEl.appendChild(coordsSpan);
+            locEl.appendChild(mapLink);
+        } else {
+            const noLoc = document.createElement('span');
+            noLoc.className = 'text-gray-500 italic';
+            noLoc.textContent = 'Brak zgody / Nie udostępniono';
+            locEl.appendChild(noLoc);
+        }
+
+        const approvePanel = document.getElementById('verifyApprovePanel');
+        const rejectPanel = document.getElementById('verifyRejectPanel');
+        if (approvePanel) approvePanel.action = `/admin/weryfikacja/${userId}/akceptuj`;
+        if (rejectPanel) rejectPanel.action = `/admin/weryfikacja/${userId}/odrzuc`;
+
+        const approveCheck = document.getElementById('approveConfirmCheck');
+        const rejectCheck = document.getElementById('rejectConfirmCheck');
+        const rejectReason = document.getElementById('verifyRejectionReason');
+        const msgInput = approvePanel ? approvePanel.querySelector('textarea[name="admin_message"]') : null;
+        if (approveCheck) approveCheck.checked = false;
+        if (rejectCheck) rejectCheck.checked = false;
+        if (rejectReason) rejectReason.value = d.rejectionReason || '';
+        if (msgInput) msgInput.value = '';
+
+        hideVerifySubpanels();
+        openModal('verifyAccountModal');
+    }
+
     // Instancje komponentu multi-select
     let dayScheduleSelectInstance = null;
     let adminPlanSelectInstance = null;
     let attendanceSelectInstance = null;
+    let massAttendanceSelectInstance = null;
+    let massPlanSelectInstance = null;
 
     // ==========================================
-    // MASOWE DODAWANIE SŁUŻB (WIELU UŻYTKOWNIKÓW / WIELE SŁUŻB)
+    // WSPÓLNA BUDOWA I WALIDACJA WIERSZY SŁUŻB
     // ==========================================
-    let attendanceBlocks = [];
-    let attendanceBlockCounter = 0;
-
     function getTodayIsoDate() {
         const d = new Date();
         const year = d.getFullYear();
@@ -1884,6 +2314,325 @@
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
+
+    function createServiceRowElement(templateData = null, options = {}) {
+        const showMultiplier = options.showMultiplier !== false;
+        const onChange = options.onChange || (() => {});
+        const onDuplicate = options.onDuplicate || (() => {});
+        const onDelete = options.onDelete || (() => {});
+
+        const defaultDate = (templateData && templateData.data_sluzby) || getTodayIsoDate();
+        const defaultHour = (templateData && templateData.godzina) || '18:00';
+        const defaultType = (templateData && templateData.typ_mszy) || 'Tygodniowa';
+        const defaultInna = (templateData && templateData.nazwa_inna) || '';
+        const defaultIlosc = (templateData && templateData.ilosc) || 1;
+
+        const rowEl = document.createElement('div');
+        rowEl.className = 'service-row-item bg-[#1e293b]/90 border border-white/10 rounded-xl p-2.5 flex flex-col gap-2';
+        rowEl.innerHTML = `
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                <div class="sm:col-span-1 flex items-center justify-between sm:justify-center">
+                    <span class="srv-row-idx text-[11px] font-mono font-black text-brand bg-brand/10 px-2 py-1 rounded-lg">#1</span>
+                </div>
+                <div class="${showMultiplier ? 'sm:col-span-3' : 'sm:col-span-4'}">
+                    <input type="date" value="${escapeHtml(defaultDate)}"
+                           class="srv-date w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand">
+                </div>
+                <div class="sm:col-span-2">
+                    <input type="text" list="commonHoursList" value="${escapeHtml(defaultHour)}" placeholder="18:00"
+                           class="srv-hour w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-brand">
+                </div>
+                <div class="${showMultiplier ? 'sm:col-span-3' : 'sm:col-span-4'}">
+                    <select class="srv-typ w-full bg-[#0f172a] border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand">
+                        <option value="Niedzielna" ${defaultType === 'Niedzielna' ? 'selected' : ''}>Niedzielna</option>
+                        <option value="Tygodniowa" ${defaultType === 'Tygodniowa' ? 'selected' : ''}>Tygodniowa</option>
+                        <option value="Roraty" ${defaultType === 'Roraty' ? 'selected' : ''}>Roraty</option>
+                        <option value="Nabożeństwo" ${defaultType === 'Nabożeństwo' ? 'selected' : ''}>Nabożeństwo</option>
+                        <option value="poranna" ${defaultType === 'poranna' ? 'selected' : ''}>Poranna</option>
+                        <option value="wieczorna" ${defaultType === 'wieczorna' ? 'selected' : ''}>Wieczorna</option>
+                        <option value="inna" ${defaultType === 'inna' ? 'selected' : ''}>Inna (Własna)</option>
+                    </select>
+                </div>
+                ${showMultiplier ? `
+                <div class="sm:col-span-2 flex items-center gap-1" title="Ile razy wpisać tę służbę (domyślnie 1)">
+                    <span class="text-[10px] text-gray-400 font-mono font-bold shrink-0">×</span>
+                    <input type="number" value="${defaultIlosc}" min="1" max="50"
+                           class="srv-ilosc w-full bg-black/30 border border-white/10 rounded-lg px-2 py-2 text-xs text-center text-white font-mono focus:outline-none focus:border-brand">
+                </div>
+                ` : '<input type="hidden" class="srv-ilosc" value="1">'}
+                <div class="sm:col-span-1 flex items-center justify-end gap-1">
+                    <button type="button" class="dup-srv-btn p-1.5 rounded-lg bg-white/5 hover:bg-brand/20 text-gray-300 hover:text-white transition" title="Duplikuj ten wiersz">
+                        ${adminSvg('copy', 'w-3.5 h-3.5')}
+                    </button>
+                    <button type="button" class="del-srv-btn p-1.5 rounded-lg bg-danger/10 hover:bg-danger/30 text-danger transition" title="Usuń ten wiersz">
+                        ${adminSvg('trash', 'w-3.5 h-3.5')}
+                    </button>
+                </div>
+            </div>
+            <div class="srv-inna-wrapper ${defaultType === 'inna' ? 'flex' : 'hidden'} items-center gap-2 pl-1">
+                <span class="text-[11px] font-bold text-purple-400 uppercase shrink-0">Nazwa nabożeństwa:</span>
+                <input type="text" value="${escapeHtml(defaultInna)}" placeholder="np. Droga Krzyżowa, Ślub, Pogrzeb"
+                       class="srv-inna flex-1 bg-black/30 border border-brand/40 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand">
+            </div>
+        `;
+
+        const typSelect = rowEl.querySelector('.srv-typ');
+        const innaWrapper = rowEl.querySelector('.srv-inna-wrapper');
+        const innaInput = rowEl.querySelector('.srv-inna');
+        const iloscInput = rowEl.querySelector('.srv-ilosc');
+
+        typSelect.addEventListener('change', () => {
+            if (typSelect.value === 'inna') {
+                innaWrapper.classList.remove('hidden');
+                innaWrapper.classList.add('flex');
+            } else {
+                innaWrapper.classList.add('hidden');
+                innaWrapper.classList.remove('flex');
+                innaInput.value = '';
+            }
+            onChange();
+        });
+
+        iloscInput.addEventListener('input', () => onChange());
+        rowEl.querySelector('.srv-date').addEventListener('change', () => onChange());
+        rowEl.querySelector('.srv-hour').addEventListener('input', () => onChange());
+
+        rowEl.querySelector('.dup-srv-btn').addEventListener('click', () => {
+            onDuplicate({
+                data_sluzby: rowEl.querySelector('.srv-date').value,
+                godzina: rowEl.querySelector('.srv-hour').value,
+                typ_mszy: typSelect.value,
+                nazwa_inna: innaInput.value,
+                ilosc: parseInt(iloscInput.value, 10) || 1
+            });
+        });
+
+        rowEl.querySelector('.del-srv-btn').addEventListener('click', () => {
+            onDelete(rowEl);
+        });
+
+        return rowEl;
+    }
+
+    function readLastRowDefaults(containerEl) {
+        const rows = containerEl ? containerEl.querySelectorAll('.service-row-item') : [];
+        if (rows.length === 0) return null;
+        const last = rows[rows.length - 1];
+        return {
+            data_sluzby: last.querySelector('.srv-date')?.value || getTodayIsoDate(),
+            godzina: last.querySelector('.srv-hour')?.value || '18:00',
+            typ_mszy: last.querySelector('.srv-typ')?.value || 'Tygodniowa',
+            nazwa_inna: last.querySelector('.srv-inna')?.value || '',
+            ilosc: parseInt(last.querySelector('.srv-ilosc')?.value, 10) || 1
+        };
+    }
+
+    function collectServicesFromContainer(containerEl, labelPrefix) {
+        const rows = containerEl ? containerEl.querySelectorAll('.service-row-item') : [];
+        if (rows.length === 0) {
+            alert(`${labelPrefix}: dodaj co najmniej jedną służbę!`);
+            return null;
+        }
+        const services = [];
+        for (let j = 0; j < rows.length; j++) {
+            const r = rows[j];
+            const dVal = (r.querySelector('.srv-date')?.value || '').trim();
+            const hVal = (r.querySelector('.srv-hour')?.value || '').trim();
+            const tVal = (r.querySelector('.srv-typ')?.value || '').trim();
+            const innaVal = (r.querySelector('.srv-inna')?.value || '').trim();
+            const iloscVal = Math.max(1, Math.min(50, parseInt(r.querySelector('.srv-ilosc')?.value, 10) || 1));
+
+            if (!dVal || !hVal || !tVal) {
+                alert(`${labelPrefix}, służba #${j + 1}: uzupełnij datę, godzinę oraz typ służby!`);
+                return null;
+            }
+            if (tVal === 'inna' && !innaVal) {
+                alert(`${labelPrefix}, służba #${j + 1}: wpisz własną nazwę dla typu "Inna"!`);
+                return null;
+            }
+
+            services.push({
+                data_sluzby: dVal,
+                godzina: hVal,
+                typ_mszy: tVal,
+                nazwa_inna: tVal === 'inna' ? innaVal : '',
+                ilosc: iloscVal
+            });
+        }
+        return services;
+    }
+
+    // ==========================================
+    // TRYB 1: MASOWE DODAWANIE SŁUŻB (PER MINISTRANT)
+    // ==========================================
+    let currentAttendanceMode = 'mass';
+    const massUserState = new Map();
+
+    function setAttendanceMode(mode) {
+        currentAttendanceMode = mode === 'set' ? 'set' : 'mass';
+        const massContainer = document.getElementById('massAttendanceModeContainer');
+        const setContainer = document.getElementById('setAttendanceModeContainer');
+        const btnMass = document.getElementById('attModeBtnMass');
+        const btnSet = document.getElementById('attModeBtnSet');
+
+        const activeBtnCls = "px-3.5 py-2 rounded-lg text-xs font-black bg-brand text-white transition flex items-center gap-1.5";
+        const inactiveBtnCls = "px-3.5 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-1.5";
+
+        if (currentAttendanceMode === 'mass') {
+            if (massContainer) massContainer.classList.remove('hidden');
+            if (setContainer) setContainer.classList.add('hidden');
+            if (btnMass) btnMass.className = activeBtnCls;
+            if (btnSet) btnSet.className = inactiveBtnCls;
+        } else {
+            if (massContainer) massContainer.classList.add('hidden');
+            if (setContainer) setContainer.classList.remove('hidden');
+            if (btnMass) btnMass.className = inactiveBtnCls;
+            if (btnSet) btnSet.className = activeBtnCls;
+        }
+        updateBulkAttendanceSummary();
+    }
+
+    function syncMassUserRowNumbers(entry) {
+        if (!entry) return;
+        const rows = entry.rowsContainer.querySelectorAll('.service-row-item');
+        rows.forEach((r, idx) => {
+            const idxEl = r.querySelector('.srv-row-idx');
+            if (idxEl) idxEl.textContent = `#${idx + 1}`;
+        });
+        if (entry.countInput) entry.countInput.value = rows.length;
+        if (entry.badgeEl) entry.badgeEl.textContent = `${rows.length} szt.`;
+    }
+
+    function resizeMassUserRows(userId, targetCount, templateData = null) {
+        const entry = massUserState.get(userId);
+        if (!entry) return;
+        const desired = Math.max(1, Math.min(50, parseInt(targetCount, 10) || 1));
+
+        while (entry.rowsContainer.querySelectorAll('.service-row-item').length < desired) {
+            const tpl = templateData || readLastRowDefaults(entry.rowsContainer);
+            const rowEl = createServiceRowElement(tpl, {
+                showMultiplier: false,
+                onChange: () => updateBulkAttendanceSummary(),
+                onDuplicate: (dupData) => {
+                    resizeMassUserRows(userId, entry.rowsContainer.querySelectorAll('.service-row-item').length + 1, dupData);
+                },
+                onDelete: (el) => {
+                    const allRows = entry.rowsContainer.querySelectorAll('.service-row-item');
+                    if (allRows.length <= 1) {
+                        alert("Każdy wybrany ministrant musi mieć co najmniej jedną służbę.");
+                        return;
+                    }
+                    el.remove();
+                    syncMassUserRowNumbers(entry);
+                    updateBulkAttendanceSummary();
+                }
+            });
+            entry.rowsContainer.appendChild(rowEl);
+        }
+
+        while (entry.rowsContainer.querySelectorAll('.service-row-item').length > desired) {
+            const allRows = entry.rowsContainer.querySelectorAll('.service-row-item');
+            allRows[allRows.length - 1].remove();
+        }
+
+        syncMassUserRowNumbers(entry);
+        updateBulkAttendanceSummary();
+    }
+
+    function syncMassAttendanceUsers(selectedUsers) {
+        const container = document.getElementById('massAttendancePerUserContainer');
+        if (!container) return;
+
+        const selectedIds = new Set(selectedUsers.map(u => u.id));
+
+        // Usuń karty odznaczonych użytkowników
+        for (const [uid, entry] of massUserState.entries()) {
+            if (!selectedIds.has(uid)) {
+                entry.cardEl.remove();
+                massUserState.delete(uid);
+            }
+        }
+
+        // Wyczyść pusty placeholder jeśli są wybrani
+        const emptyHint = container.querySelector('.mass-empty-hint');
+        if (selectedUsers.length === 0) {
+            if (!emptyHint) {
+                container.innerHTML = `
+                    <div class="mass-empty-hint p-6 rounded-2xl border border-dashed border-white/10 text-center text-xs text-gray-500">
+                        Wybierz przynajmniej jednego ministranta powyżej, a następnie określ liczbę służb do dodania dla każdej osoby.
+                    </div>
+                `;
+            }
+            updateBulkAttendanceSummary();
+            return;
+        }
+        if (emptyHint) emptyHint.remove();
+
+        // Dodaj karty dla nowo wybranych użytkowników w kolejności zaznaczenia
+        selectedUsers.forEach(u => {
+            if (massUserState.has(u.id)) return;
+
+            const cardEl = document.createElement('div');
+            cardEl.className = 'bg-black/30 border border-white/10 rounded-2xl p-4 space-y-3 hover:border-brand/40 transition';
+            cardEl.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-white/10">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="p-2 rounded-xl bg-brand/20 text-brand border border-brand/30 shrink-0">
+                            ${adminSvg('user', 'w-4 h-4')}
+                        </span>
+                        <div class="min-w-0">
+                            <div class="font-black text-white text-sm truncate">Służby: ${escapeHtml(u.imie)} ${escapeHtml(u.nazwisko)}</div>
+                            <div class="text-[11px] font-mono text-brand">@${escapeHtml(u.username)}</div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label class="text-[11px] font-bold uppercase text-gray-300">Ile służb:</label>
+                        <input type="number" min="1" max="50" value="1"
+                               class="mass-count-input w-16 bg-[#1e293b] border border-white/15 rounded-xl px-2.5 py-1.5 text-center text-white text-xs font-mono font-black focus:outline-none focus:border-brand">
+                        <button type="button" data-preset="3" class="mass-preset-btn px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-brand/25 text-gray-300 hover:text-white border border-white/10 text-[11px] font-bold transition">3</button>
+                        <button type="button" data-preset="5" class="mass-preset-btn px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 hover:text-white border border-emerald-500/30 text-[11px] font-bold transition">5</button>
+                        <span class="mass-rows-badge text-xs font-mono font-bold text-purple-300 bg-brand/15 px-2.5 py-1 rounded-lg border border-brand/25">1 szt.</span>
+                    </div>
+                </div>
+                <div class="hidden sm:grid sm:grid-cols-12 gap-2 px-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                    <div class="sm:col-span-1 text-center">Lp.</div>
+                    <div class="sm:col-span-4">Data służby</div>
+                    <div class="sm:col-span-2">Godzina</div>
+                    <div class="sm:col-span-4">Typ służby</div>
+                    <div class="sm:col-span-1 text-right">Akcje</div>
+                </div>
+                <div class="mass-rows-container flex flex-col gap-2"></div>
+            `;
+
+            container.appendChild(cardEl);
+
+            const countInput = cardEl.querySelector('.mass-count-input');
+            const rowsContainer = cardEl.querySelector('.mass-rows-container');
+            const badgeEl = cardEl.querySelector('.mass-rows-badge');
+
+            const entry = { user: u, cardEl, countInput, rowsContainer, badgeEl };
+            massUserState.set(u.id, entry);
+
+            countInput.addEventListener('change', () => {
+                resizeMassUserRows(u.id, countInput.value);
+            });
+            cardEl.querySelectorAll('.mass-preset-btn').forEach(pBtn => {
+                pBtn.addEventListener('click', () => {
+                    resizeMassUserRows(u.id, parseInt(pBtn.dataset.preset, 10));
+                });
+            });
+
+            resizeMassUserRows(u.id, 1);
+        });
+
+        updateBulkAttendanceSummary();
+    }
+
+    // ==========================================
+    // TRYB 2: ZESTAW SŁUŻB (GRUPY WSPÓLNE)
+    // ==========================================
+    let attendanceBlocks = [];
+    let attendanceBlockCounter = 0;
 
     function addAttendanceBlock(initialRowsCount = 1) {
         const container = document.getElementById('attendanceBlocksContainer');
@@ -1901,13 +2650,13 @@
         blockEl.innerHTML = `
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-white/10">
                 <div class="flex items-center gap-2">
-                    <span class="bg-brand/20 text-brand border border-brand/30 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider block-title-badge">
-                        👤 Zestaw #${attendanceBlocks.length + 1}
+                    <span class="bg-brand/20 text-brand border border-brand/30 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider block-title-badge inline-flex items-center gap-1.5">
+                        ${adminSvg('user', 'w-3.5 h-3.5')} <span>Zestaw #${attendanceBlocks.length + 1}</span>
                     </span>
                     <span class="block-stats-badge text-xs text-gray-400 font-mono">0 osób × 0 służb</span>
                 </div>
-                <button type="button" class="remove-block-btn text-xs font-bold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500/30 border border-red-500/20 px-3 py-1 rounded-xl transition ${attendanceBlocks.length === 0 ? 'hidden' : ''}">
-                    ✕ Usuń ten zestaw
+                <button type="button" class="remove-block-btn text-xs font-bold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500/30 border border-red-500/20 px-3 py-1 rounded-xl transition inline-flex items-center gap-1 ${attendanceBlocks.length === 0 ? 'hidden' : ''}">
+                    ${adminSvg('x-mark', 'w-3.5 h-3.5')} <span>Usuń ten zestaw</span>
                 </button>
             </div>
 
@@ -1924,14 +2673,14 @@
                         2. Służby do przypisania wybranym osobom:
                     </label>
                     <div class="flex flex-wrap items-center gap-1.5">
-                        <button type="button" class="add-1-srv-btn bg-brand/20 hover:bg-brand text-purple-200 hover:text-white border border-brand/30 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition">
-                            ➕ +1 służba
+                        <button type="button" class="add-1-srv-btn bg-brand/20 hover:bg-brand text-purple-200 hover:text-white border border-brand/30 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition inline-flex items-center gap-1">
+                            ${adminSvg('plus', 'w-3 h-3')} <span>+1 służba</span>
                         </button>
-                        <button type="button" class="add-3-srv-btn bg-white/5 hover:bg-brand/30 text-gray-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-lg text-[11px] font-bold transition">
-                            ⚡ +3 służby
+                        <button type="button" class="add-3-srv-btn bg-white/5 hover:bg-brand/30 text-gray-300 hover:text-white border border-white/10 px-2.5 py-1 rounded-lg text-[11px] font-bold transition inline-flex items-center gap-1">
+                            ${adminSvg('bolt', 'w-3 h-3')} <span>+3 służby</span>
                         </button>
-                        <button type="button" class="add-5-srv-btn bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 hover:text-white border border-emerald-500/30 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition">
-                            ⚡ +5 służb naraz
+                        <button type="button" class="add-5-srv-btn bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-300 hover:text-white border border-emerald-500/30 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition inline-flex items-center gap-1">
+                            ${adminSvg('bolt', 'w-3 h-3')} <span>+5 służb naraz</span>
                         </button>
                     </div>
                 </div>
@@ -2012,120 +2761,21 @@
         if (!block) return;
 
         for (let i = 0; i < count; i++) {
-            const existingRows = block.servicesContainer.querySelectorAll('.service-row-item');
-            let defaultDate = getTodayIsoDate();
-            let defaultHour = '18:00';
-            let defaultType = 'Tygodniowa';
-            let defaultInna = '';
-            let defaultIlosc = 1;
-
-            if (templateData) {
-                defaultDate = templateData.data_sluzby || defaultDate;
-                defaultHour = templateData.godzina || defaultHour;
-                defaultType = templateData.typ_mszy || defaultType;
-                defaultInna = templateData.nazwa_inna || '';
-                defaultIlosc = templateData.ilosc || 1;
-            } else if (existingRows.length > 0) {
-                const lastRow = existingRows[existingRows.length - 1];
-                const lastDateVal = lastRow.querySelector('.srv-date')?.value;
-                const lastHourVal = lastRow.querySelector('.srv-hour')?.value;
-                const lastTypeVal = lastRow.querySelector('.srv-typ')?.value;
-                if (lastDateVal) defaultDate = lastDateVal;
-                if (lastHourVal) defaultHour = lastHourVal;
-                if (lastTypeVal) defaultType = lastTypeVal;
-            }
-
-            const rowEl = document.createElement('div');
-            rowEl.className = 'service-row-item bg-[#1e293b]/90 border border-white/10 rounded-xl p-2.5 flex flex-col gap-2';
-            rowEl.innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
-                    <div class="sm:col-span-1 flex items-center justify-between sm:justify-center">
-                        <span class="srv-row-idx text-[11px] font-mono font-black text-brand bg-brand/10 px-2 py-1 rounded-lg">#1</span>
-                    </div>
-                    <div class="sm:col-span-3">
-                        <input type="date" name="data_sluzby" value="${defaultDate}" required
-                               class="srv-date w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <input type="text" name="godzina" list="commonHoursList" value="${defaultHour}" required placeholder="18:00"
-                               class="srv-hour w-full bg-black/30 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-brand">
-                    </div>
-                    <div class="sm:col-span-3">
-                        <select name="typ_mszy" class="srv-typ w-full bg-[#0f172a] border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand">
-                            <option value="Niedzielna" ${defaultType === 'Niedzielna' ? 'selected' : ''}>Niedzielna</option>
-                            <option value="Tygodniowa" ${defaultType === 'Tygodniowa' ? 'selected' : ''}>Tygodniowa</option>
-                            <option value="Roraty" ${defaultType === 'Roraty' ? 'selected' : ''}>Roraty</option>
-                            <option value="Nabożeństwo" ${defaultType === 'Nabożeństwo' ? 'selected' : ''}>Nabożeństwo</option>
-                            <option value="poranna" ${defaultType === 'poranna' ? 'selected' : ''}>Poranna</option>
-                            <option value="wieczorna" ${defaultType === 'wieczorna' ? 'selected' : ''}>Wieczorna</option>
-                            <option value="inna" ${defaultType === 'inna' ? 'selected' : ''}>Inna (Własna)</option>
-                        </select>
-                    </div>
-                    <div class="sm:col-span-2 flex items-center gap-1" title="Ile razy wpisać tę służbę (domyślnie 1)">
-                        <span class="text-[10px] text-gray-400 font-mono font-bold shrink-0">×</span>
-                        <input type="number" name="ilosc" value="${defaultIlosc}" min="1" max="50" required
-                               class="srv-ilosc w-full bg-black/30 border border-white/10 rounded-lg px-2 py-2 text-xs text-center text-white font-mono focus:outline-none focus:border-brand">
-                    </div>
-                    <div class="sm:col-span-1 flex items-center justify-end gap-1">
-                        <button type="button" class="dup-srv-btn p-1.5 rounded-lg bg-white/5 hover:bg-brand/20 text-gray-300 hover:text-white text-xs transition" title="Duplikuj ten wiersz">
-                            📋
-                        </button>
-                        <button type="button" class="del-srv-btn p-1.5 rounded-lg bg-danger/10 hover:bg-danger/30 text-danger text-xs transition" title="Usuń ten wiersz">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-                <div class="srv-inna-wrapper ${defaultType === 'inna' ? 'flex' : 'hidden'} items-center gap-2 pl-1">
-                    <span class="text-[11px] font-bold text-purple-400 uppercase shrink-0">Nazwa nabożeństwa:</span>
-                    <input type="text" name="nazwa_inna" value="${defaultInna}" placeholder="np. Droga Krzyżowa, Ślub, Pogrzeb"
-                           class="srv-inna flex-1 bg-black/30 border border-brand/40 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-brand"
-                           ${defaultType === 'inna' ? 'required' : ''}>
-                </div>
-            `;
-
-            const typSelect = rowEl.querySelector('.srv-typ');
-            const innaWrapper = rowEl.querySelector('.srv-inna-wrapper');
-            const innaInput = rowEl.querySelector('.srv-inna');
-            const iloscInput = rowEl.querySelector('.srv-ilosc');
-
-            typSelect.addEventListener('change', () => {
-                if (typSelect.value === 'inna') {
-                    innaWrapper.classList.remove('hidden');
-                    innaWrapper.classList.add('flex');
-                    innaInput.required = true;
-                } else {
-                    innaWrapper.classList.add('hidden');
-                    innaWrapper.classList.remove('flex');
-                    innaInput.required = false;
-                    innaInput.value = '';
+            const tpl = templateData || readLastRowDefaults(block.servicesContainer);
+            const rowEl = createServiceRowElement(tpl, {
+                showMultiplier: true,
+                onChange: () => updateBulkAttendanceSummary(),
+                onDuplicate: (dupData) => addServiceRowsToBlock(blockId, 1, dupData),
+                onDelete: (el) => {
+                    const allRows = block.servicesContainer.querySelectorAll('.service-row-item');
+                    if (allRows.length <= 1) {
+                        alert("W zestawie musi znajdować się co najmniej jedna służba.");
+                        return;
+                    }
+                    el.remove();
+                    refreshAttendanceBlocksUI();
                 }
-                updateBulkAttendanceSummary();
             });
-
-            iloscInput.addEventListener('input', () => updateBulkAttendanceSummary());
-            rowEl.querySelector('.srv-date').addEventListener('change', () => updateBulkAttendanceSummary());
-            rowEl.querySelector('.srv-hour').addEventListener('input', () => updateBulkAttendanceSummary());
-
-            rowEl.querySelector('.dup-srv-btn').addEventListener('click', () => {
-                addServiceRowsToBlock(blockId, 1, {
-                    data_sluzby: rowEl.querySelector('.srv-date').value,
-                    godzina: rowEl.querySelector('.srv-hour').value,
-                    typ_mszy: typSelect.value,
-                    nazwa_inna: innaInput.value,
-                    ilosc: parseInt(iloscInput.value, 10) || 1
-                });
-            });
-
-            rowEl.querySelector('.del-srv-btn').addEventListener('click', () => {
-                const allRows = block.servicesContainer.querySelectorAll('.service-row-item');
-                if (allRows.length <= 1) {
-                    alert("W zestawie musi znajdować się co najmniej jedna służba.");
-                    return;
-                }
-                rowEl.remove();
-                refreshAttendanceBlocksUI();
-            });
-
             block.servicesContainer.appendChild(rowEl);
         }
 
@@ -2135,7 +2785,7 @@
     function refreshAttendanceBlocksUI() {
         attendanceBlocks.forEach((b, idx) => {
             const titleBadge = b.element.querySelector('.block-title-badge');
-            if (titleBadge) titleBadge.textContent = `👤 Zestaw #${idx + 1}`;
+            if (titleBadge) titleBadge.innerHTML = `${adminSvg('user', 'w-3.5 h-3.5')} <span>Zestaw #${idx + 1}</span>`;
 
             const removeBtn = b.element.querySelector('.remove-block-btn');
             if (removeBtn) {
@@ -2157,6 +2807,23 @@
     }
 
     function updateBulkAttendanceSummary() {
+        const labelEl = document.getElementById('bulkSummaryGroupsLabel');
+        const groupsEl = document.getElementById('bulkSummaryGroups');
+        const usersEl = document.getElementById('bulkSummaryUsers');
+        const entriesEl = document.getElementById('bulkSummaryTotalEntries');
+
+        if (currentAttendanceMode === 'mass') {
+            let totalEntries = 0;
+            massUserState.forEach(entry => {
+                totalEntries += entry.rowsContainer.querySelectorAll('.service-row-item').length;
+            });
+            if (labelEl) labelEl.textContent = 'Tryb:';
+            if (groupsEl) groupsEl.textContent = 'Masowy';
+            if (usersEl) usersEl.textContent = massUserState.size;
+            if (entriesEl) entriesEl.textContent = totalEntries;
+            return;
+        }
+
         let totalGroups = attendanceBlocks.length;
         const uniqueUserIds = new Set();
         let totalEntries = 0;
@@ -2183,21 +2850,214 @@
             }
         });
 
-        const groupsEl = document.getElementById('bulkSummaryGroups');
-        const usersEl = document.getElementById('bulkSummaryUsers');
-        const entriesEl = document.getElementById('bulkSummaryTotalEntries');
-
+        if (labelEl) labelEl.textContent = 'Zestawy:';
         if (groupsEl) groupsEl.textContent = totalGroups;
         if (usersEl) usersEl.textContent = uniqueUserIds.size;
         if (entriesEl) entriesEl.textContent = totalEntries;
     }
 
     function resetAttendanceModal() {
-        const container = document.getElementById('attendanceBlocksContainer');
-        if (container) container.innerHTML = '';
+        if (massAttendanceSelectInstance) {
+            massAttendanceSelectInstance.reset();
+        }
+        massUserState.clear();
+        const massContainer = document.getElementById('massAttendancePerUserContainer');
+        if (massContainer) {
+            massContainer.innerHTML = `
+                <div class="mass-empty-hint p-6 rounded-2xl border border-dashed border-white/10 text-center text-xs text-gray-500">
+                    Wybierz przynajmniej jednego ministranta powyżej, a następnie określ liczbę służb do dodania dla każdej osoby.
+                </div>
+            `;
+        }
+
+        const setContainer = document.getElementById('attendanceBlocksContainer');
+        if (setContainer) setContainer.innerHTML = '';
         attendanceBlocks = [];
         attendanceBlockCounter = 0;
         addAttendanceBlock(1);
+
+        setAttendanceMode('mass');
+    }
+
+    function validateAttendanceMultiSelect() {
+        const jsonInput = document.getElementById('attendanceBatchesJson');
+        const batches = [];
+
+        if (currentAttendanceMode === 'mass') {
+            if (massUserState.size === 0) {
+                alert("Wybierz przynajmniej jednego ministranta!");
+                return false;
+            }
+            for (const [uid, entry] of massUserState.entries()) {
+                const label = `Służby ${entry.user.imie} ${entry.user.nazwisko} (@${entry.user.username})`;
+                const services = collectServicesFromContainer(entry.rowsContainer, label);
+                if (!services) return false;
+                batches.push({ user_ids: [uid], services: services });
+            }
+            if (jsonInput) jsonInput.value = JSON.stringify(batches);
+            return true;
+        }
+
+        if (!attendanceBlocks || attendanceBlocks.length === 0) {
+            alert("Dodaj przynajmniej jeden zestaw służb!");
+            return false;
+        }
+
+        for (let i = 0; i < attendanceBlocks.length; i++) {
+            const b = attendanceBlocks[i];
+            const selectedUsers = b.userSelect ? b.userSelect.selectedUsers : [];
+            if (selectedUsers.length === 0) {
+                alert(`W zestawie #${i + 1} wybierz co najmniej jednego ministranta!`);
+                return false;
+            }
+            const services = collectServicesFromContainer(b.servicesContainer, `Zestaw #${i + 1}`);
+            if (!services) return false;
+
+            batches.push({
+                user_ids: selectedUsers.map(u => u.id),
+                services: services
+            });
+        }
+
+        if (jsonInput) jsonInput.value = JSON.stringify(batches);
+        return true;
+    }
+
+    // ==========================================
+    // MASOWE PRZYPISYWANIE OSÓB DO GRAFIKU
+    // ==========================================
+    let currentPlanAssignMode = 'mass';
+    const massPlanState = new Map();
+    const PLAN_DAYS_ORDER = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
+
+    function setPlanAssignMode(mode) {
+        currentPlanAssignMode = mode === 'single' ? 'single' : 'mass';
+        const massEl = document.getElementById('massPlanModeContainer');
+        const singleEl = document.getElementById('singlePlanModeContainer');
+        const btnMass = document.getElementById('planModeBtnMass');
+        const btnSingle = document.getElementById('planModeBtnSingle');
+
+        const activeCls = "px-3.5 py-2 rounded-lg text-xs font-black bg-brand text-white transition flex items-center gap-1.5";
+        const inactiveCls = "px-3.5 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition flex items-center gap-1.5";
+
+        if (currentPlanAssignMode === 'mass') {
+            if (massEl) massEl.classList.remove('hidden');
+            if (singleEl) singleEl.classList.add('hidden');
+            if (btnMass) btnMass.className = activeCls;
+            if (btnSingle) btnSingle.className = inactiveCls;
+        } else {
+            if (massEl) massEl.classList.add('hidden');
+            if (singleEl) {
+                singleEl.classList.remove('hidden');
+                singleEl.classList.add('flex');
+            }
+            if (btnMass) btnMass.className = inactiveCls;
+            if (btnSingle) btnSingle.className = activeCls;
+        }
+    }
+
+    function addSlotToMassPlanUser(userId, defaultDay = 'Poniedziałek', defaultHour = '18:00') {
+        const entry = massPlanState.get(userId);
+        if (!entry) return;
+
+        const rowEl = document.createElement('div');
+        rowEl.className = 'mass-plan-slot-row grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-[#1e293b]/90 border border-white/10 rounded-xl p-2.5';
+
+        const dayOptionsHtml = PLAN_DAYS_ORDER.map(d =>
+            `<option value="${d}" ${d === defaultDay ? 'selected' : ''}>${d}</option>`
+        ).join('');
+
+        rowEl.innerHTML = `
+            <div class="sm:col-span-5">
+                <select class="plan-slot-day w-full bg-[#0f172a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand">
+                    ${dayOptionsHtml}
+                </select>
+            </div>
+            <div class="sm:col-span-5">
+                <select class="plan-slot-hour w-full bg-[#0f172a] border border-white/10 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-brand"></select>
+            </div>
+            <div class="sm:col-span-2 flex justify-end">
+                <button type="button" class="del-plan-slot-btn p-2 rounded-lg bg-danger/10 hover:bg-danger/30 text-danger transition text-xs font-bold inline-flex items-center gap-1" title="Usuń ten termin">
+                    ${adminSvg('trash', 'w-3.5 h-3.5')}
+                </button>
+            </div>
+        `;
+
+        const daySelect = rowEl.querySelector('.plan-slot-day');
+        const hourSelect = rowEl.querySelector('.plan-slot-hour');
+        buildGodzinyOptions(hourSelect, daySelect.value, defaultHour);
+
+        daySelect.addEventListener('change', () => {
+            buildGodzinyOptions(hourSelect, daySelect.value);
+        });
+
+        rowEl.querySelector('.del-plan-slot-btn').addEventListener('click', () => {
+            if (entry.slotsContainer.querySelectorAll('.mass-plan-slot-row').length <= 1) {
+                alert("Każda wybrana osoba musi mieć co najmniej jeden termin dyżuru.");
+                return;
+            }
+            rowEl.remove();
+        });
+
+        entry.slotsContainer.appendChild(rowEl);
+    }
+
+    function syncMassPlanUsers(selectedUsers) {
+        const container = document.getElementById('massPlanPerUserContainer');
+        if (!container) return;
+
+        const selectedIds = new Set(selectedUsers.map(u => u.id));
+        for (const [uid, entry] of massPlanState.entries()) {
+            if (!selectedIds.has(uid)) {
+                entry.cardEl.remove();
+                massPlanState.delete(uid);
+            }
+        }
+
+        const emptyHint = container.querySelector('.mass-plan-empty');
+        if (selectedUsers.length === 0) {
+            if (!emptyHint) {
+                container.innerHTML = `
+                    <div class="mass-plan-empty p-4 rounded-2xl border border-dashed border-white/10 text-center text-xs text-gray-500">
+                        Wybierz co najmniej jednego ministranta powyżej, aby ustawić mu indywidualne dni i godziny dyżurów.
+                    </div>
+                `;
+            }
+            return;
+        }
+        if (emptyHint) emptyHint.remove();
+
+        selectedUsers.forEach(u => {
+            if (massPlanState.has(u.id)) return;
+
+            const cardEl = document.createElement('div');
+            cardEl.className = 'bg-black/30 border border-white/10 rounded-2xl p-4 space-y-3 hover:border-brand/40 transition';
+            cardEl.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-white/10">
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 rounded-lg bg-brand/20 text-brand border border-brand/30">
+                            ${adminSvg('user', 'w-4 h-4')}
+                        </span>
+                        <span class="font-black text-white text-sm">${escapeHtml(u.imie)} ${escapeHtml(u.nazwisko)}</span>
+                        <span class="text-xs font-mono text-brand">@${escapeHtml(u.username)}</span>
+                    </div>
+                    <button type="button" class="add-plan-slot-btn bg-brand/20 hover:bg-brand text-purple-200 hover:text-white border border-brand/30 px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5">
+                        ${adminSvg('plus', 'w-3.5 h-3.5')} <span>Dodaj kolejny termin</span>
+                    </button>
+                </div>
+                <div class="mass-plan-slots-container space-y-2"></div>
+            `;
+
+            container.appendChild(cardEl);
+            const slotsContainer = cardEl.querySelector('.mass-plan-slots-container');
+            massPlanState.set(u.id, { user: u, cardEl, slotsContainer });
+
+            cardEl.querySelector('.add-plan-slot-btn').addEventListener('click', () => {
+                addSlotToMassPlanUser(u.id, 'Niedziela', '11:00');
+            });
+
+            addSlotToMassPlanUser(u.id, 'Poniedziałek', '18:00');
+        });
     }
 
     function openDayScheduleModal(dzien) {
@@ -2205,15 +3065,7 @@
         document.getElementById('dayScheduleInputDzien').value = dzien;
         
         const godzinaSelect = document.getElementById('dayScheduleSelectGodzina');
-        godzinaSelect.innerHTML = '';
-        const godziny = godzinyPlanAdmin[dzien] || [];
-        godziny.forEach(g => {
-            const opt = document.createElement('option');
-            opt.value = g;
-            opt.textContent = g;
-            opt.className = "bg-[#1e293b] text-white";
-            godzinaSelect.appendChild(opt);
-        });
+        buildGodzinyOptions(godzinaSelect, dzien);
 
         if (dayScheduleSelectInstance) {
             dayScheduleSelectInstance.reset();
@@ -2231,70 +3083,35 @@
     }
 
     function validatePlanMultiSelect() {
+        const batchesField = document.getElementById('scheduleBatchesJson');
+        if (currentPlanAssignMode === 'mass') {
+            if (massPlanState.size === 0) {
+                alert("Proszę wybrać co najmniej jednego ministranta do grafiku!");
+                return false;
+            }
+            const batches = [];
+            for (const [uid, entry] of massPlanState.entries()) {
+                const slotRows = entry.slotsContainer.querySelectorAll('.mass-plan-slot-row');
+                const slots = [];
+                slotRows.forEach(r => {
+                    const d = r.querySelector('.plan-slot-day')?.value;
+                    const g = r.querySelector('.plan-slot-hour')?.value;
+                    if (d && g) slots.push({ dzien: d, godzina: g });
+                });
+                if (slots.length === 0) {
+                    alert(`Dodaj co najmniej jeden termin dla ${entry.user.imie} ${entry.user.nazwisko}!`);
+                    return false;
+                }
+                batches.push({ user_id: uid, slots: slots });
+            }
+            if (batchesField) batchesField.value = JSON.stringify(batches);
+            return true;
+        }
+
+        if (batchesField) batchesField.value = '';
         if (!adminPlanSelectInstance || adminPlanSelectInstance.getSelectedCount() === 0) {
             alert("Proszę wybrać co najmniej jednego ministranta!");
             return false;
-        }
-        return true;
-    }
-
-    function validateAttendanceMultiSelect() {
-        if (!attendanceBlocks || attendanceBlocks.length === 0) {
-            alert("Dodaj przynajmniej jeden zestaw służb!");
-            return false;
-        }
-
-        const batches = [];
-        for (let i = 0; i < attendanceBlocks.length; i++) {
-            const b = attendanceBlocks[i];
-            const selectedUsers = b.userSelect ? b.userSelect.selectedUsers : [];
-            if (selectedUsers.length === 0) {
-                alert(`W zestawie #${i + 1} wybierz co najmniej jednego ministranta!`);
-                return false;
-            }
-
-            const rows = b.servicesContainer.querySelectorAll('.service-row-item');
-            if (rows.length === 0) {
-                alert(`W zestawie #${i + 1} dodaj co najmniej jedną służbę!`);
-                return false;
-            }
-
-            const services = [];
-            for (let j = 0; j < rows.length; j++) {
-                const r = rows[j];
-                const dVal = (r.querySelector('.srv-date')?.value || '').trim();
-                const hVal = (r.querySelector('.srv-hour')?.value || '').trim();
-                const tVal = (r.querySelector('.srv-typ')?.value || '').trim();
-                const innaVal = (r.querySelector('.srv-inna')?.value || '').trim();
-                const iloscVal = Math.max(1, Math.min(50, parseInt(r.querySelector('.srv-ilosc')?.value, 10) || 1));
-
-                if (!dVal || !hVal || !tVal) {
-                    alert(`W zestawie #${i + 1}, wiersz #${j + 1}: uzupełnij datę, godzinę oraz typ służby!`);
-                    return false;
-                }
-                if (tVal === 'inna' && !innaVal) {
-                    alert(`W zestawie #${i + 1}, wiersz #${j + 1}: wpisz własną nazwę dla nabożeństwa typu "Inna"!`);
-                    return false;
-                }
-
-                services.push({
-                    data_sluzby: dVal,
-                    godzina: hVal,
-                    typ_mszy: tVal,
-                    nazwa_inna: tVal === 'inna' ? innaVal : '',
-                    ilosc: iloscVal
-                });
-            }
-
-            batches.push({
-                user_ids: selectedUsers.map(u => u.id),
-                services: services
-            });
-        }
-
-        const jsonInput = document.getElementById('attendanceBatchesJson');
-        if (jsonInput) {
-            jsonInput.value = JSON.stringify(batches);
         }
         return true;
     }
@@ -2347,7 +3164,10 @@
                 noResultsRow.style.display = '';
                 noResultsRow.innerHTML = `
                     <td colspan="8" class="p-8 text-center text-gray-400 font-medium">
-                        🔍 Nie znaleziono żadnego konta pasującego do frazy: "<strong class="text-white">${query}</strong>"
+                        <span class="inline-flex items-center gap-2 justify-center">
+                            ${adminSvg('search', 'w-4 h-4 text-brand')}
+                            <span>Nie znaleziono żadnego konta pasującego do frazy: "<strong class="text-white">${escapeHtml(query)}</strong>"</span>
+                        </span>
                     </td>
                 `;
             }
@@ -2383,10 +3203,25 @@
             users: ALL_MINISTRANCI
         });
 
-        // Inicjalizacja pierwszego bloku masowego/ręcznego dodawania służb
-        resetAttendanceModal();
+        massAttendanceSelectInstance = new MultiUserSelect({
+            containerId: 'massAttendanceUserSelectContainer',
+            inputName: 'mass_user_ids',
+            placeholder: 'Wyszukaj i zaznacz jednego lub wielu ministrantów...',
+            users: ALL_MINISTRANCI,
+            onChange: (selected) => syncMassAttendanceUsers(selected)
+        });
 
-        // Automatyczne załadowanie początkowych godzin przy otwarciu strony
+        massPlanSelectInstance = new MultiUserSelect({
+            containerId: 'massPlanUserSelectContainer',
+            inputName: 'mass_plan_user_ids',
+            placeholder: 'Wyszukaj i wybierz ministrantów do grafiku...',
+            users: ALL_MINISTRANCI,
+            onChange: (selected) => syncMassPlanUsers(selected)
+        });
+
+        // Inicjalizacja formularza służb oraz grafiku
+        resetAttendanceModal();
+        setPlanAssignMode('mass');
         updateAdminGodziny();
         
         // Obsługa aktywnej zakładki (w tym obsługa kotwicy #weryfikacja)

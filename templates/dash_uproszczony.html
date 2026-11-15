@@ -10,17 +10,17 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div>
                 {% if session.get('user_role') == 'admin' %}
-                    <a href="{{ url_for('admin_page') }}" class="text-red-400 font-bold bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 px-3 py-1.5 rounded-xl transition duration-300 text-xs inline-flex items-center gap-1">
-                        ⚙️ Wróć do panelu admina
+                    <a href="{{ url_for('admin_page') }}" class="text-red-400 font-bold bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 px-3 py-1.5 rounded-xl transition duration-300 text-xs inline-flex items-center gap-1.5">
+                        {{ svg_icon('settings', 'w-3.5 h-3.5') }} <span>Wróć do panelu admina</span>
                     </a>
                 {% elif session.get('has_admin_rank') %}
-                    <a href="{{ url_for('logout', mode='admin') }}" class="text-amber-400 font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-3 py-1.5 rounded-xl transition duration-300 text-xs inline-flex items-center gap-1" title="Przejdź do logowania na Konto Admina (wymaga GPS i kodu z Telegrama)">
-                        👑 Przełącz na Konto Admina
+                    <a href="{{ url_for('logout', mode='admin') }}" class="text-amber-400 font-bold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-3 py-1.5 rounded-xl transition duration-300 text-xs inline-flex items-center gap-1.5" title="Przejdź do logowania na Konto Admina (wymaga GPS i kodu z Telegrama)">
+                        {{ svg_icon('crown', 'w-3.5 h-3.5') }} <span>Przełącz na Konto Admina</span>
                     </a>
                 {% endif %}
             </div>
-            <a href="{{ url_for('logout') }}" class="text-danger font-bold hover:bg-danger/10 px-3 py-1.5 rounded-xl transition duration-300 text-xs inline-flex items-center gap-1 ml-auto">
-                🚪 Wyloguj
+            <a href="{{ url_for('logout') }}" class="text-danger font-bold hover:bg-danger/10 px-3 py-1.5 rounded-xl transition duration-300 text-xs inline-flex items-center gap-1.5 ml-auto">
+                {{ svg_icon('logout', 'w-3.5 h-3.5') }} <span>Wyloguj</span>
             </a>
         </div>
 
@@ -30,10 +30,30 @@
             <p class="text-gray-400 text-sm mt-1">Zgłoś swoją obecność na służbie w kilka sekund.</p>
         </div>
 
+        {% if user_obj and user_obj.admin_message %}
+        <div class="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-start justify-between gap-3">
+            <div class="flex items-start gap-2.5">
+                <span class="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 shrink-0 mt-0.5">
+                    {{ svg_icon('message-square', 'w-4 h-4') }}
+                </span>
+                <div>
+                    <p class="text-xs font-black uppercase tracking-wider text-emerald-400 mb-0.5">Wiadomość od Administratora</p>
+                    <p class="text-sm text-white leading-relaxed">{{ user_obj.admin_message }}</p>
+                </div>
+            </div>
+            <form action="{{ url_for('dismiss_welcome_message') }}" method="POST" class="shrink-0">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-gray-300 hover:text-white transition inline-flex items-center gap-1" title="Ukryj wiadomość">
+                    {{ svg_icon('check', 'w-3.5 h-3.5') }} <span>Rozumiem</span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
         {% if announcements %}
         <div class="mb-8 p-5 bg-slate-900/40 rounded-2xl border border-white/5">
             <h2 class="text-sm font-black text-brand uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span>📢</span> Ogłoszenia od Szefa:
+                {{ svg_icon('megaphone', 'w-4 h-4') }} <span>Ogłoszenia od Szefa:</span>
             </h2>
             <div class="flex flex-col gap-3">
                 {% for ann in announcements %}
@@ -73,7 +93,7 @@
                         <option value="inna">Inna (wpisz własną)</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-                        ▼
+                        {{ svg_icon('chevron-down', 'w-4 h-4') }}
                     </div>
                 </div>
             </div>
@@ -86,22 +106,24 @@
 
             <button type="submit" 
                 class="w-full mt-2 p-3.5 bg-brand hover:bg-brand/90 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-brand/20 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
-                🚀 Dodaj Służbę
+                {{ svg_icon('rocket', 'w-4 h-4') }} <span>Dodaj Służbę</span>
             </button>
-            <div class="p-3 rounded-xl bg-brand/10 border border-brand/20 text-xs text-gray-300 text-center">
-                ℹ️ Możesz wpisać służbę:
+            <div class="p-3 rounded-xl bg-brand/10 border border-brand/20 text-xs text-gray-300 text-center flex items-center justify-center gap-1.5 flex-wrap">
+                {{ svg_icon('info', 'w-4 h-4 text-brand shrink-0') }}
+                <span>Możesz wpisać służbę:
                 {% if attendance_days_back == 0 %}
                     <strong class="text-white">tylko dzisiaj (0 dni wstecz)</strong>
                 {% else %}
                     do <strong class="text-white">{{ attendance_days_back }} dni wstecz</strong> ({{ min_attendance_date }} – {{ max_attendance_date }})
                 {% endif %}
+                </span>
             </div>
         </form>
     </div>
 
     <div class="w-full bg-cardbg/20 backdrop-blur-xl rounded-3xl p-6 border border-white/5 shadow-2xl">
         <h2 class="text-base font-black text-white mb-4 flex items-center gap-2">
-            <span>⏳</span> Ostatnio zgłoszone:
+            {{ svg_icon('clock', 'w-4 h-4 text-brand') }} <span>Ostatnio zgłoszone:</span>
         </h2>
         
         {% if attendances %}

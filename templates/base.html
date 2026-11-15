@@ -103,13 +103,26 @@
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="flash-toast animate-toast-in pointer-events-auto flex items-center gap-3 p-4 rounded-2xl shadow-xl border backdrop-blur-md transition-all duration-300
-                        {% if category == 'error' %}
-                            bg-red-500/10 border-danger text-danger shadow-danger-glow
+                        {% if category in ['error', 'danger', 'rejected'] %}
+                            bg-red-500/15 border-danger text-danger shadow-danger-glow
+                        {% elif category == 'warning' %}
+                            bg-amber-500/15 border-amber-500 text-amber-400 shadow-lg
                         {% elif category == 'success' %}
-                            bg-green-500/10 border-success text-success shadow-success-glow
+                            bg-green-500/15 border-success text-success shadow-success-glow
                         {% else %}
-                            bg-brand/10 border-brand text-white shadow-brand-glow
+                            bg-brand/15 border-brand text-gray-900 dark:text-white shadow-brand-glow
                         {% endif %}">
+                        <span class="shrink-0">
+                            {% if category in ['error', 'danger', 'rejected'] %}
+                                {{ svg_icon('x-circle', 'w-5 h-5') }}
+                            {% elif category == 'warning' %}
+                                {{ svg_icon('alert', 'w-5 h-5') }}
+                            {% elif category == 'success' %}
+                                {{ svg_icon('check-circle', 'w-5 h-5') }}
+                            {% else %}
+                                {{ svg_icon('info', 'w-5 h-5') }}
+                            {% endif %}
+                        </span>
                         
                         <div class="flex-grow font-semibold text-sm">
                             {{ message }}
@@ -125,15 +138,17 @@
     <header class="bg-white dark:bg-cardbg border-b border-gray-200 dark:border-gray-800 transition-colors duration-300 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <span class="text-2xl filter drop-shadow">🛡️</span>
+                <span class="p-2 rounded-xl bg-brand/15 text-brand border border-brand/20 shadow-sm flex items-center justify-center">
+                    {{ svg_icon('shield', 'w-5 h-5') }}
+                </span>
                 <span class="font-black tracking-tight text-lg bg-gradient-to-r from-brand to-purple-500 bg-clip-text text-transparent">
                     System Ministranci
                 </span>
             </div>
             
             <div class="flex items-center gap-4">
-                <button id="theme-btn" onclick="toggleTheme()" class="px-4 py-2 text-xs font-bold bg-gray-50 dark:bg-darkbg hover:bg-gray-200 dark:hover:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition duration-200 shadow-sm">
-                    ☀️ Jasny Motyw
+                <button id="theme-btn" onclick="toggleTheme()" class="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-gray-50 dark:bg-darkbg hover:bg-gray-200 dark:hover:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition duration-200 shadow-sm">
+                    {{ svg_icon('sun', 'w-4 h-4 text-amber-400') }} <span>Jasny Motyw</span>
                 </button>
             </div>
         </div>
@@ -150,7 +165,9 @@
 
     <div id="cookie-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[300] flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-cardbg border border-gray-200 dark:border-gray-800 max-w-md w-full p-6 rounded-3xl shadow-2xl text-center flex flex-col items-center gap-4 animate-toast-in">
-            <div class="text-4xl">🍪</div>
+            <div class="p-3.5 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                {{ svg_icon('cookie', 'w-9 h-9') }}
+            </div>
             <h3 class="text-xl font-extrabold text-gray-900 dark:text-white">Polityka Prywatności i Cookies</h3>
             <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                 Nasz system wykorzystuje pamięć lokalną oraz techniczne pliki cookie w celu autoryzacji bezpiecznej sesji ministranta. 
@@ -163,31 +180,36 @@
     </div>
 
     <script>
+        const BASE_SVG_RAW = {{ get_svg_icon_map(['sun', 'moon'])|tojson }};
+        function baseSvg(name, cls) {
+            const raw = BASE_SVG_RAW[name] || '';
+            return raw ? raw.replace('<svg ', `<svg class="${cls}" aria-hidden="true" `) : '';
+        }
+
+        function setThemeButtonVisual(isDark) {
+            const btn = document.getElementById('theme-btn');
+            if (!btn) return;
+            if (isDark) {
+                btn.innerHTML = `${baseSvg('sun', 'w-4 h-4 text-amber-400')} <span>Jasny Motyw</span>`;
+            } else {
+                btn.innerHTML = `${baseSvg('moon', 'w-4 h-4 text-indigo-500')} <span>Ciemny Motyw</span>`;
+            }
+        }
+
         // Logika przełączania motywu graficznego (Dark Mode / Light Mode)
         function toggleTheme() {
             const html = document.documentElement;
-            const btn = document.getElementById('theme-btn');
-            
-            if (!html || !btn) return;
-            
+            if (!html) return;
             html.classList.toggle('dark');
-            
-            if (html.classList.contains('dark')) {
-                btn.innerText = "☀️ Jasny Motyw";
-                localStorage.setItem('theme', 'dark');
-            } else {
-                btn.innerText = "🌙 Ciemny Motyw";
-                localStorage.setItem('theme', 'light');
-            }
+            const isDark = html.classList.contains('dark');
+            setThemeButtonVisual(isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
         }
 
         // Sprawdzenie i odczyt zapisanego stanu motywu z pamięci LocalStorage
         if (localStorage.getItem('theme') === 'light') {
             document.documentElement.classList.remove('dark');
-            const btn = document.getElementById('theme-btn');
-            if (btn) {
-                btn.innerText = "🌙 Ciemny Motyw";
-            }
+            setThemeButtonVisual(false);
         }
 
         // Sprawdzenie, czy użytkownik zaakceptował regulamin plików cookies

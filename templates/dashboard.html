@@ -15,31 +15,31 @@
         <nav class="flex flex-col gap-2.5 flex-grow">
             <button onclick="switchTab('ogloszenia')" id="tab-btn-ogloszenia" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300 transform bg-brand text-white shadow-brand-glow">
-                <span>📢</span> Tablica Ogłoszeń
+                {{ svg_icon('megaphone', 'w-5 h-5') }} <span>Tablica Ogłoszeń</span>
             </button>
             <button onclick="switchTab('sluzby')" id="tab-btn-sluzby" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300 transform text-gray-400 hover:bg-white/5">
-                <span>➕</span> Zgłoś Służbę
+                {{ svg_icon('plus', 'w-5 h-5') }} <span>Zgłoś Służbę</span>
             </button>
             <button onclick="switchTab('historia')" id="tab-btn-historia" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300 transform text-gray-400 hover:bg-white/5">
-                <span>⏳</span> Moja Historia
+                {{ svg_icon('clock', 'w-5 h-5') }} <span>Moja Historia</span>
             </button>
             <button onclick="switchTab('plan_sluzb')" id="tab-btn-plan_sluzb" 
                 class="nav-btn flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left transition-all duration-300 transform text-gray-400 hover:bg-white/5 hover:text-white">
-                <span>🗓️</span> Plan Stałych Służb
+                {{ svg_icon('calendar', 'w-5 h-5') }} <span>Plan Stałych Służb</span>
             </button>
 
             {% if session.get('user_role') == 'admin' %}
                 <div class="mt-auto pt-4 border-t border-white/5">
                     <a href="{{ url_for('admin_page') }}" class="flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all duration-300">
-                        <span>⚙️</span> Wróć do panelu admina
+                        {{ svg_icon('settings', 'w-5 h-5') }} <span>Wróć do panelu admina</span>
                     </a>
                 </div>
             {% elif session.get('has_admin_rank') %}
                 <div class="mt-auto pt-4 border-t border-white/5">
                     <a href="{{ url_for('logout', mode='admin') }}" class="flex items-center gap-3 w-full p-4 rounded-2xl font-extrabold text-sm text-left text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all duration-300" title="Przejdź do logowania na Konto Admina (wymaga GPS i kodu z Telegrama)">
-                        <span>👑</span> Przełącz na Konto Admina
+                        {{ svg_icon('crown', 'w-5 h-5') }} <span>Przełącz na Konto Admina</span>
                     </a>
                 </div>
             {% endif %}
@@ -47,18 +47,38 @@
         
         <div class="mt-auto pt-6 border-t border-white/5 flex flex-col gap-2">
             <div class="text-xs text-gray-500 text-center mb-2">Zalogowany jako: <span class="text-gray-300 font-bold">@{{ user }}</span></div>
-            <a href="{{ url_for('logout') }}" class="w-full text-center p-3.5 bg-danger/10 hover:bg-danger/20 text-danger font-bold text-sm rounded-xl transition duration-300">
-                🚪 Wyloguj się
+            <a href="{{ url_for('logout') }}" class="w-full text-center p-3.5 bg-danger/10 hover:bg-danger/20 text-danger font-bold text-sm rounded-xl transition duration-300 inline-flex items-center justify-center gap-2">
+                {{ svg_icon('logout', 'w-4 h-4') }} <span>Wyloguj się</span>
             </a>
         </div>
     </aside>
 
     <main class="flex-grow flex flex-col gap-6 min-w-0">
+
+        {% if user_obj and user_obj.admin_message %}
+        <div class="p-5 bg-emerald-500/10 border border-emerald-500/30 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div class="flex items-start gap-3">
+                <span class="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0 mt-0.5">
+                    {{ svg_icon('message-square', 'w-5 h-5') }}
+                </span>
+                <div>
+                    <p class="text-xs font-black uppercase tracking-wider text-emerald-400 mb-0.5">Wiadomość od Administratora</p>
+                    <p class="text-sm text-white leading-relaxed whitespace-pre-line">{{ user_obj.admin_message }}</p>
+                </div>
+            </div>
+            <form action="{{ url_for('dismiss_welcome_message') }}" method="POST" class="shrink-0 self-end sm:self-center">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-white border border-emerald-500/30 text-xs font-bold transition inline-flex items-center gap-1.5">
+                    {{ svg_icon('check', 'w-4 h-4') }} <span>Rozumiem, ukryj</span>
+                </button>
+            </form>
+        </div>
+        {% endif %}
         
         <!-- ZAKŁADKA 1: TABLICA OGŁOSZEŃ -->
         <div id="section-ogloszenia" class="tab-section bg-cardbg/20 backdrop-blur-xl border border-white/5 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col">
             <h2 class="text-2xl md:text-3xl font-black text-white mb-6 flex items-center gap-3">
-                <span class="text-brand">📢</span> Tablica Ogłoszeń
+                {{ svg_icon('megaphone', 'w-7 h-7 text-brand') }} <span>Tablica Ogłoszeń</span>
             </h2>
             
             {% if announcements %}
@@ -77,7 +97,7 @@
             </div>
             {% else %}
             <div class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-white/10 rounded-2xl">
-                <span class="text-4xl mb-3">🕊️</span>
+                {{ svg_icon('inbox', 'w-10 h-10 text-gray-500 mb-3') }}
                 <p class="text-gray-400 font-medium italic">Brak nowych ogłoszeń od Szefa.</p>
             </div>
             {% endif %}
@@ -86,7 +106,7 @@
         <!-- ZAKŁADKA 2: FORMULARZ DODAWANIA OBECNOŚCI -->
         <div id="section-sluzby" class="tab-section hidden bg-cardbg/20 backdrop-blur-xl border border-white/5 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col">
             <h2 class="text-2xl md:text-3xl font-black text-white mb-6 flex items-center gap-3">
-                <span class="text-brand">➕</span> Zgłoś Służbę
+                {{ svg_icon('plus', 'w-7 h-7 text-brand') }} <span>Zgłoś Służbę</span>
             </h2>
             
             <form action="{{ url_for('dashboard_page') }}" method="POST" class="space-y-4">
@@ -115,7 +135,7 @@
                             <option value="inna">Inna (wpisz własną)</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-                            ▼
+                            {{ svg_icon('chevron-down', 'w-4 h-4') }}
                         </div>
                     </div>
                 </div>
@@ -128,15 +148,17 @@
 
                 <button type="submit" 
                     class="w-full mt-2 p-4 bg-brand hover:bg-brand/90 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-brand/20 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
-                    🚀 Zapisz moją obecność
+                    {{ svg_icon('rocket', 'w-4 h-4') }} <span>Zapisz moją obecność</span>
                 </button>
-                <div class="p-3 rounded-xl bg-brand/10 border border-brand/20 text-xs text-gray-300 text-center">
-                    ℹ️ Aktualne okno zgłaszania służb:
+                <div class="p-3 rounded-xl bg-brand/10 border border-brand/20 text-xs text-gray-300 text-center flex items-center justify-center gap-1.5 flex-wrap">
+                    {{ svg_icon('info', 'w-4 h-4 text-brand shrink-0') }}
+                    <span>Aktualne okno zgłaszania służb:
                     {% if attendance_days_back == 0 %}
                         <strong class="text-white">tylko dzisiaj (0 dni wstecz)</strong>
                     {% else %}
                         do <strong class="text-white">{{ attendance_days_back }} dni wstecz</strong> (od <span class="font-mono">{{ min_attendance_date }}</span> do <span class="font-mono">{{ max_attendance_date }}</span>)
                     {% endif %}
+                    </span>
                 </div>
             </form>
         </div>
@@ -144,7 +166,7 @@
         <!-- ZAKŁADKA 3: HISTORIA OSOBISTYCH SŁUŻB -->
         <div id="section-historia" class="tab-section hidden bg-cardbg/20 backdrop-blur-xl border border-white/5 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col">
             <h2 class="text-2xl md:text-3xl font-black text-white mb-6 flex items-center gap-3">
-                <span class="text-brand">⏳</span> Moja Historia Służb
+                {{ svg_icon('clock', 'w-7 h-7 text-brand') }} <span>Moja Historia Służb</span>
             </h2>
             
             {% if attendances %}
@@ -166,24 +188,24 @@
                             </td>
                             <td class="p-4">
                                 {% if att.typ_mszy == 'inna' %}
-                                <span class="inline-flex bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                                    ⚙️ {{ att.nazwa_inna }}
+                                <span class="inline-flex items-center gap-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                    {{ svg_icon('settings', 'w-3.5 h-3.5') }} <span>{{ att.nazwa_inna }}</span>
                                 </span>
                                 {% else %}
-                                <span class="inline-flex bg-brand/10 text-brand border border-brand/20 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                                    ⛪ {{ att.typ_mszy }}
+                                <span class="inline-flex items-center gap-1.5 bg-brand/10 text-brand border border-brand/20 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                    {{ svg_icon('church', 'w-3.5 h-3.5') }} <span>{{ att.typ_mszy }}</span>
                                 </span>
                                 {% endif %}
                             </td>
                             <td class="p-4">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button onclick="openMyEditModal(`{{ att.id }}`, `{{ att.data_sluzby.strftime('%Y-%m-%d') }}`, `{{ att.godzina }}`, `{{ att.typ_mszy }}`, `{{ att.nazwa_inna or '' }}`)" class="p-2 bg-brand/10 text-brand hover:bg-brand/20 rounded-xl transition duration-200 text-sm font-bold px-3">
-                                        ✏️ Edytuj
+                                    <button onclick="openMyEditModal(`{{ att.id }}`, `{{ att.data_sluzby.strftime('%Y-%m-%d') }}`, `{{ att.godzina }}`, `{{ att.typ_mszy }}`, `{{ att.nazwa_inna or '' }}`)" class="p-2 bg-brand/10 text-brand hover:bg-brand/20 rounded-xl transition duration-200 text-sm font-bold px-3 inline-flex items-center gap-1.5">
+                                        {{ svg_icon('edit', 'w-3.5 h-3.5') }} <span>Edytuj</span>
                                     </button>
                                     <form action="{{ url_for('delete_my_attendance', id=att.id) }}" method="POST" class="inline" onsubmit="return confirm('Czy na pewno chcesz usunąć tę służbę?')">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="p-2 bg-danger/10 text-danger hover:bg-danger/20 rounded-xl transition duration-200 text-sm font-bold px-3">
-                                            🗑️ Usuń
+                                        <button type="submit" class="p-2 bg-danger/10 text-danger hover:bg-danger/20 rounded-xl transition duration-200 text-sm font-bold px-3 inline-flex items-center gap-1.5">
+                                            {{ svg_icon('trash', 'w-3.5 h-3.5') }} <span>Usuń</span>
                                         </button>
                                     </form>
                                 </div>
@@ -195,7 +217,7 @@
             </div>
             {% else %}
             <div class="flex flex-col items-center justify-center py-16 text-center border border-dashed border-white/10 rounded-2xl">
-                <span class="text-4xl mb-3">📋</span>
+                {{ svg_icon('clipboard', 'w-10 h-10 text-gray-500 mb-3') }}
                 <p class="text-gray-400 font-medium italic">Nie zgłosiłeś jeszcze żadnej służby.</p>
             </div>
             {% endif %}
@@ -207,14 +229,14 @@
             <!-- SEKCJA: MOJE PRZYPISANE DYŻURY -->
             <div class="mb-8">
                 <h3 class="text-lg font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    🛡️ Moje przypisane dyżury
+                    {{ svg_icon('shield', 'w-5 h-5 text-brand') }} <span>Moje przypisane dyżury</span>
                 </h3>
                 {% if moje_dyzury %}
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         {% for dyzur in moje_dyzury %}
                             <div class="bg-emerald-500/20 border border-emerald-500/40 p-4 rounded-2xl flex items-center gap-3 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
                                 <div class="w-10 h-10 rounded-xl bg-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold shrink-0">
-                                    🔔
+                                    {{ svg_icon('bell', 'w-5 h-5') }}
                                 </div>
                                 <div>
                                     <div class="font-extrabold text-sm text-white">{{ dyzur.dzien_tygodnia }}</div>
@@ -233,13 +255,13 @@
             <!-- SEKCJA: PEŁNY PLAN TYGODNIA -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pt-6 border-t border-white/5">
                 <div>
-                    <h3 class="text-lg font-black text-white uppercase tracking-wider">
-                        📅 Pełny plan na ten tydzień
+                    <h3 class="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                        {{ svg_icon('calendar', 'w-5 h-5 text-brand') }} <span>Pełny plan na ten tydzień</span>
                     </h3>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <a href="{{ url_for('export_schedule') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-bold text-xs transition duration-200 flex items-center gap-2 shrink-0">
-                        📥 Pobierz Plan Służb (Excel)
+                        {{ svg_icon('download', 'w-4 h-4') }} <span>Pobierz Plan Służb (Excel)</span>
                     </a>
                 </div>
             </div>
@@ -262,13 +284,13 @@
                             {% if plan[dzien] %}
                                 {% for godzina, user_list in plan[dzien].items() %}
                                     <div class="p-3.5 bg-white/5 rounded-xl border border-white/5 flex flex-col min-w-0">
-                                        <div class="text-xs font-bold text-brand font-mono mb-2 flex items-center gap-1 shrink-0">
-                                            🕐 Godzina {{ godzina }}
+                                        <div class="text-xs font-bold text-brand font-mono mb-2 flex items-center gap-1.5 shrink-0">
+                                            {{ svg_icon('clock', 'w-3.5 h-3.5') }} <span>Godzina {{ godzina }}</span>
                                         </div>
                                         <ul class="space-y-2.5 pl-1 min-w-0">
                                             {% for u in user_list %}
-                                                <li class="text-xs text-gray-300 font-medium flex items-start gap-1.5 min-w-0">
-                                                    <span class="text-brand shrink-0 mt-0.5 select-none">•</span>
+                                                <li class="text-xs text-gray-300 font-medium flex items-start gap-2 min-w-0">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-brand shrink-0 mt-1.5 select-none"></span>
                                                     <div class="flex flex-col min-w-0 w-full">
                                                         <!-- Przeciwdziałanie rozrywaniu kontenera poprzez wymuszone ucinanie tekstu -->
                                                         <span class="font-bold text-white truncate break-all block" title="{{ u.username }}">
@@ -302,7 +324,7 @@
 <div id="editMyAttendanceModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
     <div class="bg-[#1e293b] border border-white/10 rounded-3xl w-full max-w-md p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-black text-white">✏️ Modyfikacja Zgłoszenia</h3>
+            <h3 class="text-xl font-black text-white flex items-center gap-2">{{ svg_icon('edit', 'w-5 h-5 text-brand') }} <span>Modyfikacja Zgłoszenia</span></h3>
             <button type="button" onclick="closeMyEditModal()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
         </div>
         <form id="editMyAttendanceForm" method="POST" action="">

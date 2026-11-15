@@ -204,7 +204,7 @@
             
             <div class="bg-white dark:bg-cardbg rounded-3xl p-6 md:p-8 shadow-2xl mb-12 border border-brand/20">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-                    <span class="p-1.5 bg-brand/10 text-brand rounded-lg">➕</span> Dodaj Przydział Stałego Dyżuru
+                    <span class="p-1.5 bg-brand/10 text-brand rounded-lg">{{ svg_icon('plus', 'w-4 h-4') }}</span> Dodaj Przydział Stałego Dyżuru
                 </h3>
                 <form action="/admin/add_schedule" method="POST" class="flex flex-col lg:flex-row gap-6 items-stretch lg:items-end w-full">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -277,8 +277,8 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-xs text-gray-400 dark:text-gray-500 italic mt-2 flex items-center gap-1">
-                            <span>ℹ️</span> Brak zapisanych dyżurów.
+                        <p class="text-xs text-gray-400 dark:text-gray-500 italic mt-2 flex items-center gap-1.5">
+                            {{ svg_icon('info', 'w-3.5 h-3.5 text-brand shrink-0') }} <span>Brak zapisanych dyżurów.</span>
                         </p>
                     {% endif %}
                 </div>
@@ -369,7 +369,7 @@
         'Czwartek': ['06:30', '18:00'],
         'Piątek': ['06:30', '18:00'],
         'Sobota': ['07:30', '08:00', '17:30', '18:00'],
-        'Niedziela': ['07:00', '09:00', '09:30', '10:30', '11:00', '12:00', '14:00', '19:00']
+        'Niedziela': ['07:00', '09:00', '09:30', '10:30', '11:00', '12:00', '19:00']
     };
 
     function updateGodziny() {

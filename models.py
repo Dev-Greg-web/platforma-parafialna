@@ -28,6 +28,12 @@ class Users(db.Model):
     failed_login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
 
+    # Weryfikacja konta, urządzenie i powiadomienia od administratora
+    registration_device = db.Column(db.String(255), nullable=True)
+    verification_status = db.Column(db.String(20), default='PENDING')
+    rejection_reason = db.Column(db.Text, nullable=True)
+    admin_message = db.Column(db.Text, nullable=True)
+
 class Attendance(db.Model):
     __tablename__ = "attendance"
     id = db.Column(db.Integer, primary_key=True)
