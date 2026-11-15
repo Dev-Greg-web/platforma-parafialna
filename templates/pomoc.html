@@ -140,6 +140,34 @@
             </div>
 
             <div class="bg-white dark:bg-[#1f2a44] rounded-3xl shadow-md border border-gray-100 dark:border-gray-700/60 overflow-hidden">
+                <button onclick="toggleSection('push-pwa-box')" class="w-full flex items-center justify-between p-5 font-bold text-gray-800 dark:text-white text-left bg-gray-50/50 dark:bg-gray-800/10 hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-all">
+                    <span class="flex items-center gap-3 text-base font-bold">{{ svg_icon('bell', 'w-5 h-5 text-brand') }} <span>Powiadomienia na telefon (Web Push / PWA)</span></span>
+                    <span id="icon-push-pwa-box" class="text-xs font-bold transition-transform duration-200">{{ svg_icon('chevron-down', 'w-4 h-4') }}</span>
+                </button>
+                <div id="push-pwa-box" class="hidden p-6 border-t border-gray-100 dark:border-gray-700/50 space-y-5">
+                    <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                        System nie wymaga podawania numeru telefonu ani instalowania aplikacji ze sklepu. Powiadomienia o nowych ogłoszeniach i dyżurach w grafiku przychodzą bezpośrednio na ekran blokady telefonu.
+                    </p>
+                    <div class="border-l-4 border-emerald-500 pl-4">
+                        <h4 class="font-black text-emerald-600 dark:text-emerald-400 text-sm mb-2 flex items-center gap-1.5">{{ svg_icon('device-mobile', 'w-4 h-4') }} <span>Android (Google Chrome / Edge / Samsung Internet)</span></h4>
+                        <ul class="text-xs space-y-2 text-gray-600 dark:text-gray-300">
+                            <li>1. Zaloguj się do swojego panelu ministranta przez stronę (HTTPS).</li>
+                            <li>2. Kliknij przycisk <strong>„Włącz powiadomienia na telefon”</strong> w menu panelu.</li>
+                            <li>3. W oknie przeglądarki wybierz <strong>„Zezwól”</strong> na powiadomienia.</li>
+                        </ul>
+                    </div>
+                    <div class="border-l-4 border-brand pl-4">
+                        <h4 class="font-black text-brand text-sm mb-2 flex items-center gap-1.5">{{ svg_icon('device-mobile', 'w-4 h-4') }} <span>iPhone / iPad (iOS 16.4+)</span></h4>
+                        <ul class="text-xs space-y-2 text-gray-600 dark:text-gray-300">
+                            <li>1. Otwórz stronę systemu w przeglądarce <strong>Safari</strong>.</li>
+                            <li>2. Kliknij ikonę <strong>Udostępnij</strong> na dolnym pasku i wybierz <strong>„Dodaj do ekranu początkowego”</strong>.</li>
+                            <li>3. Uruchom aplikację z nowej ikony na pulpicie telefonu, zaloguj się i kliknij <strong>„Włącz powiadomienia na telefon”</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#1f2a44] rounded-3xl shadow-md border border-gray-100 dark:border-gray-700/60 overflow-hidden">
                 <button onclick="toggleSection('windows-box')" class="w-full flex items-center justify-between p-5 font-bold text-gray-800 dark:text-white text-left bg-gray-50/50 dark:bg-gray-800/10 hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-all">
                     <span class="flex items-center gap-3 text-base font-bold">{{ svg_icon('device-desktop', 'w-5 h-5 text-blue-500') }} <span>Microsoft Windows (PC / Laptop)</span></span>
                     <span id="icon-windows-box" class="text-xs font-bold transition-transform duration-200">{{ svg_icon('chevron-down', 'w-4 h-4') }}</span>

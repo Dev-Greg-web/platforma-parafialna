@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory, send_file, abort
+from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory, send_file, abort, jsonify
 from markupsafe import Markup, escape
 from models import (
     Users, Attendance, Announcement, Schedule, db,
-    PasswordResetRequest, SystemSettings, AuditLog,
+    PasswordResetRequest, SystemSettings, AuditLog, PushSubscription,
     get_setting, set_setting
 )
 from flask_sqlalchemy import SQLAlchemy
@@ -830,6 +830,12 @@ def auth_process():
                 ip_address=resolved_ip_str,
                 details=f"Rejestracja nowego konta: {new_user.imie} {new_user.nazwisko} (@{username})"
             )
+            send_web_push_to_users(
+                user_ids=get_admin_user_ids(),
+                title="Nowe konto do weryfikacji",
+                body=f"{new_user.imie} {new_user.nazwisko} (@{username}) czeka na weryfikację.",
+                url="/admin#weryfikacja"
+            )
             flash("Konto stworzone. Poczekaj na weryfikację przez administratora.", "success")
             return redirect(url_for('login_page'))
 
@@ -1373,6 +1379,12 @@ def add_announcement():
     db.session.add(nowe)
     db.session.commit()
     log_audit_event("LOG_ADMIN_ACTION", details=f"Dodano ogłoszenie: {nowe.tytul}")
+    send_web_push_to_users(
+        user_ids=None,
+        title=f"Nowe ogłoszenie: {nowe.tytul}",
+        body=(nowe.tresc[:140] + ("..." if len(nowe.tresc) > 140 else "")) if nowe.tresc else "Sprawdź tablicę ogłoszeń w panelu.",
+        url="/dashboard"
+    )
     flash("Nowe ogłoszenie dodane pomyślnie.", "success")
     if session.get('user_role') == 'ksiądz':
         return redirect(url_for('ksDash'))
@@ -1459,6 +1471,12 @@ def add_schedule():
             db.session.commit()
             if added_count > 0:
                 log_audit_event("LOG_ADMIN_ACTION", details=f"Masowe przypisanie {added_count} dyżur(ów) w grafiku dla {len(affected_users)} osób")
+                send_web_push_to_users(
+                    user_ids=list(affected_users),
+                    title="Nowe dyżury w grafiku",
+                    body="Zostałeś przypisany do nowego dyżuru w grafiku tygodniowym.",
+                    url="/dashboard"
+                )
                 msg = f"Pomyślnie zapisano {added_count} przypisań w grafiku dla {len(affected_users)} ministrant(ów)."
                 if already_assigned > 0:
                     msg += f" ({already_assigned} było już przypisanych)."
@@ -1604,6 +1622,9 @@ def admin_page():
     unapproved_users = pending_users
     unapproved_count = len(unapproved_users)
     approved_users = Users.query.filter_by(is_approved=True).order_by(Users.nazwisko, Users.imie).all()
+    verified_history_users = Users.query.filter(
+        Users.verification_status.in_(['APPROVED', 'REJECTED'])
+    ).order_by(Users.created_at.desc(), Users.id.desc()).all()
     all_users = Users.query.order_by(Users.created_at.desc()).all()
     audit_logs_total_count = AuditLog.query.count()
     audit_logs = AuditLog.query.order_by(AuditLog.created_at.desc(), AuditLog.id.desc()).limit(AUDIT_LOG_AUTO_EXPORT_LIMIT).all()
@@ -1621,6 +1642,7 @@ def admin_page():
         attendances=all_attendance, 
         users=all_users, 
         approved_users=approved_users,
+        verified_history_users=verified_history_users,
         pending_users=pending_users,
         rejected_users=rejected_users,
         announcements=all_announcements, 
@@ -2449,6 +2471,12 @@ def export_audit_logs_batch_to_drive(logs_batch=None, clear_exported=True, trigg
             f"Drive ID: `{file_id}`"
         )]
     ).start()
+    send_web_push_to_users(
+        user_ids=get_admin_user_ids(),
+        title="Eksport AuditLog na Dysk Google",
+        body=f"Wysłano paczkę {len(exported_ids)} logów ({filename}).",
+        url="/admin#ustawienia"
+    )
 
     return uploaded, filename, len(exported_ids)
 
@@ -2802,6 +2830,173 @@ def init_admin_account():
     # Domyślne ustawienie limitu dni wstecz na wpisywanie służb (3 dni)
     if db.session.get(SystemSettings, 'attendance_days_back') is None:
         set_setting('attendance_days_back', '3')
+
+# --- WEB PUSH (PWA) ---
+
+def get_admin_user_ids():
+    """Zwraca listę ID kont z rolą admin."""
+    return [u.id for u in Users.query.filter_by(role='admin').with_entities(Users.id).all()]
+
+def get_vapid_keys():
+    """Zwraca parę kluczy VAPID (publiczny base64url, prywatny base64url). Generuje automatycznie, jeśli brak."""
+    pub = (os.getenv("VAPID_PUBLIC_KEY") or "").strip()
+    priv = (os.getenv("VAPID_PRIVATE_KEY") or "").strip()
+    if pub and priv:
+        return pub, priv
+
+    pub_db = (get_setting("vapid_public_key", "") or "").strip()
+    priv_db = (get_setting("vapid_private_key", "") or "").strip()
+    if pub_db and priv_db:
+        return pub_db, priv_db
+
+    from py_vapid import Vapid
+    from py_vapid.utils import b64urlencode
+    from cryptography.hazmat.primitives import serialization
+
+    vapid = Vapid()
+    vapid.generate_keys()
+    raw_pub = vapid.public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint
+    )
+    raw_priv = vapid.private_key.private_numbers().private_value.to_bytes(32, "big")
+    pub_b64 = b64urlencode(raw_pub)
+    priv_b64 = b64urlencode(raw_priv)
+    set_setting("vapid_public_key", pub_b64)
+    set_setting("vapid_private_key", priv_b64)
+    return pub_b64, priv_b64
+
+
+def _dispatch_web_push_worker(subs_data, payload_json, priv_key, claims):
+    from pywebpush import webpush, WebPushException
+
+    expired_ids = []
+    for sub_id, sub_info in subs_data:
+        try:
+            webpush(
+                subscription_info=sub_info,
+                data=payload_json,
+                vapid_private_key=priv_key,
+                vapid_claims=claims
+            )
+        except WebPushException as ex:
+            status = getattr(getattr(ex, "response", None), "status_code", None)
+            if status in (404, 410):
+                expired_ids.append(sub_id)
+            else:
+                print(f"Ostrzeżenie Web Push (sub #{sub_id}): {ex}")
+        except Exception as ex:
+            print(f"Błąd wysyłki Web Push (sub #{sub_id}): {ex}")
+
+    if expired_ids:
+        with app.app_context():
+            try:
+                PushSubscription.query.filter(PushSubscription.id.in_(expired_ids)).delete(synchronize_session=False)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+
+def send_web_push_to_users(user_ids=None, title="System Ministranci", body="", url="/dashboard"):
+    """Wysyła powiadomienia Web Push w tle do wskazanych użytkowników (lub wszystkich, gdy user_ids=None)."""
+    try:
+        _, priv_key = get_vapid_keys()
+        query = PushSubscription.query
+        if user_ids is not None:
+            if not user_ids:
+                return 0
+            query = query.filter(PushSubscription.user_id.in_(user_ids))
+        subs = query.all()
+        if not subs:
+            return 0
+
+        subs_data = [
+            (
+                s.id,
+                {"endpoint": s.endpoint, "keys": {"p256dh": s.p256dh, "auth": s.auth}}
+            )
+            for s in subs
+        ]
+        payload_json = json.dumps({"title": title, "body": body, "url": url})
+        claims = {"sub": os.getenv("VAPID_SUBJECT", "mailto:admin@ministranci.local")}
+        Thread(target=_dispatch_web_push_worker, args=(subs_data, payload_json, priv_key, claims)).start()
+        return len(subs_data)
+    except Exception as e:
+        print(f"Błąd przygotowania Web Push: {e}")
+        return 0
+
+
+@app.route('/sw.js')
+def service_worker():
+    response = send_from_directory(os.path.join(app.root_path, 'static'), 'sw.js', mimetype='application/javascript')
+    response.headers['Service-Worker-Allowed'] = '/'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
+@app.route('/api/push/public-key')
+@login_required
+def push_public_key():
+    pub_key, _ = get_vapid_keys()
+    return jsonify({"publicKey": pub_key})
+
+
+@app.route('/api/push/subscribe', methods=['POST'])
+@login_required
+def push_subscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = (data.get('endpoint') or '').strip()
+    keys = data.get('keys') or {}
+    p256dh = (keys.get('p256dh') or '').strip()
+    auth = (keys.get('auth') or '').strip()
+
+    if not endpoint or not p256dh or not auth:
+        return jsonify({"ok": False, "error": "Brak wymaganych danych subskrypcji Push."}), 400
+
+    existing = PushSubscription.query.filter_by(endpoint=endpoint).first()
+    ua = parse_user_agent(request.headers.get('User-Agent', ''))
+    if existing:
+        existing.user_id = session['user_id']
+        existing.p256dh = p256dh
+        existing.auth = auth
+        existing.user_agent = ua
+    else:
+        db.session.add(PushSubscription(
+            user_id=session['user_id'],
+            endpoint=endpoint,
+            p256dh=p256dh,
+            auth=auth,
+            user_agent=ua
+        ))
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@app.route('/api/push/unsubscribe', methods=['POST'])
+@login_required
+def push_unsubscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = (data.get('endpoint') or '').strip()
+    if endpoint:
+        PushSubscription.query.filter_by(endpoint=endpoint, user_id=session['user_id']).delete()
+        db.session.commit()
+    return jsonify({"ok": True})
+
+
+@app.route('/admin/send_push_notification', methods=['POST'])
+@admin_required
+def admin_send_push_notification():
+    title = (request.form.get('push_title') or 'System Ministranci').strip()[:100]
+    body = (request.form.get('push_body') or '').strip()[:300]
+    if not body:
+        flash("Wpisz treść powiadomienia Push!", "warning")
+        return redirect(url_for('admin_page') + '#ustawienia')
+
+    sent_count = send_web_push_to_users(user_ids=None, title=title, body=body, url="/dashboard")
+    log_audit_event("LOG_ADMIN_ACTION", details=f"Wysłano powiadomienie Web Push ({sent_count} urządzeń): {title}")
+    flash(f"Wysłano powiadomienie Web Push do {sent_count} zapisanych urządzeń.", "success")
+    return redirect(url_for('admin_page') + '#ustawienia')
+
 
 # --- HARMONOGRAM APSCHEDULER (AUTOMATYCZNY EKSPORT NA KONIEC MIESIĄCA) ---
 scheduler = BackgroundScheduler(timezone=ZoneInfo("Europe/Warsaw"))

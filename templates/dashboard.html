@@ -47,6 +47,9 @@
         
         <div class="mt-auto pt-6 border-t border-white/5 flex flex-col gap-2">
             <div class="text-xs text-gray-500 text-center mb-2">Zalogowany jako: <span class="text-gray-300 font-bold">@{{ user }}</span></div>
+            <button type="button" onclick="toggleWebPushSubscription(this)" class="web-push-toggle-btn w-full text-center p-3 bg-brand/15 hover:bg-brand/25 text-purple-300 border border-brand/30 font-bold text-xs rounded-xl transition duration-300 inline-flex items-center justify-center gap-2">
+                {{ svg_icon('bell', 'w-4 h-4') }} <span class="push-btn-label">Włącz powiadomienia na telefon</span>
+            </button>
             <a href="{{ url_for('logout') }}" class="w-full text-center p-3.5 bg-danger/10 hover:bg-danger/20 text-danger font-bold text-sm rounded-xl transition duration-300 inline-flex items-center justify-center gap-2">
                 {{ svg_icon('logout', 'w-4 h-4') }} <span>Wyloguj się</span>
             </a>

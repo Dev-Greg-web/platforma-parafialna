@@ -7,6 +7,8 @@
     <title>{% block title %}System Ministrancki{% endblock %} | Parafia WNMP</title>
     
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#5E3BEE">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -245,10 +247,97 @@
             }, 350);
         };
 
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        window.syncWebPushButtons = async function() {
+            const btns = document.querySelectorAll('.web-push-toggle-btn');
+            if (!btns.length) return;
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                btns.forEach(b => {
+                    b.disabled = true;
+                    const lbl = b.querySelector('.push-btn-label');
+                    if (lbl) lbl.textContent = 'Push niedostępny';
+                });
+                return;
+            }
+            try {
+                const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                const sub = await reg.pushManager.getSubscription();
+                btns.forEach(b => {
+                    const lbl = b.querySelector('.push-btn-label');
+                    if (sub) {
+                        b.dataset.subscribed = '1';
+                        if (lbl) lbl.textContent = 'Powiadomienia Push: Włączone';
+                    } else {
+                        b.dataset.subscribed = '0';
+                        if (lbl) lbl.textContent = 'Włącz powiadomienia na telefon';
+                    }
+                });
+            } catch (e) {}
+        };
+
+        window.toggleWebPushSubscription = async function(btn) {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                alert('Twoja przeglądarka nie obsługuje powiadomień Web Push.');
+                return;
+            }
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            try {
+                const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                await navigator.serviceWorker.ready;
+                const existing = await reg.pushManager.getSubscription();
+
+                if (existing) {
+                    await fetch('/api/push/unsubscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                        body: JSON.stringify({ endpoint: existing.endpoint })
+                    });
+                    await existing.unsubscribe();
+                    await window.syncWebPushButtons();
+                    return;
+                }
+
+                const perm = await Notification.requestPermission();
+                if (perm !== 'granted') {
+                    alert('Aby otrzymywać powiadomienia na telefon, zezwól na powiadomienia w przeglądarce.');
+                    return;
+                }
+
+                const keyRes = await fetch('/api/push/public-key');
+                const keyData = await keyRes.json();
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+                });
+
+                await fetch('/api/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: JSON.stringify(sub.toJSON())
+                });
+                await window.syncWebPushButtons();
+            } catch (err) {
+                alert('Nie udało się skonfigurować powiadomień Push: ' + (err.message || err));
+            }
+        };
+
         // Wywołanie procedur startowych po pełnym załadowaniu struktury DOM
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof checkCookies === "function") {
                 checkCookies();
+            }
+            if (typeof window.syncWebPushButtons === "function") {
+                window.syncWebPushButtons();
             }
 
             // Automatyczne odliczanie i wygaszanie istniejących powiadomień

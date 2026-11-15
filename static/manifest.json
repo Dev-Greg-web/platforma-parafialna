@@ -1,0 +1,18 @@
+{
+  "name": "System Ministranci",
+  "short_name": "Ministranci",
+  "description": "System zarządzania służbami i grafikiem ministrantów",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1121",
+  "theme_color": "#5E3BEE",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
