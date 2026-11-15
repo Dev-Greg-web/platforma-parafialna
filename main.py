@@ -117,7 +117,7 @@ def get_client_ip():
     return request.remote_addr or "127.0.0.1"
 
 _AUDIT_EXPORT_LOCK = Lock()
-AUDIT_LOG_AUTO_EXPORT_LIMIT = 50
+AUDIT_LOG_AUTO_EXPORT_LIMIT = 100
 
 _AUDIT_EVENT_CATEGORY_STYLES = {
     "LOG_AUTH_01": ("Logowanie / Autoryzacja (Sukces)", "ECFDF5"),
