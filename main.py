@@ -1017,13 +1017,14 @@ def _approve_user_account(user):
 
     db.session.commit()
     log_audit_event("LOG_ADMIN_ACTION", details=f"Zatwierdzono konto użytkownika @{uname}")
-    send_web_push_to_users(
+    sent_count = send_web_push_to_users(
         user_ids=[user.id],
         title="Konto zatwierdzone",
         body="Twoje konto zostało zatwierdzone przez administratora. Możesz się już zalogować.",
         url="/"
     )
-    flash(f"Konto użytkownika {uname} ({full_name}) zostało pomyślnie zatwierdzone!", "success")
+    push_info = " Wysłano powiadomienie Push." if sent_count > 0 else " (Brak aktywnej subskrypcji Push — zobaczy informację na stronie logowania)."
+    flash(f"Konto użytkownika {uname} ({full_name}) zostało pomyślnie zatwierdzone!{push_info}", "success")
 
 
 def _reject_user_account(user):
@@ -1039,13 +1040,14 @@ def _reject_user_account(user):
     user.rejection_reason = rejection_reason
     db.session.commit()
     log_audit_event("LOG_ADMIN_ACTION", details=f"Odrzucono konto @{uname}. Powód: {rejection_reason}")
-    send_web_push_to_users(
+    sent_count = send_web_push_to_users(
         user_ids=[user.id],
         title="Konto odrzucone",
         body=f"Twoje konto zostało odrzucone przez administratora. Powód: {rejection_reason}",
         url="/"
     )
-    flash(f"Konto użytkownika {uname} ({full_name}) zostało odrzucone. Powód został zapisany i będzie widoczny dla użytkownika.", "warning")
+    push_info = " Wysłano powiadomienie Push." if sent_count > 0 else " (Brak aktywnej subskrypcji Push — zobaczy powód na stronie logowania)."
+    flash(f"Konto użytkownika {uname} ({full_name}) zostało odrzucone.{push_info}", "warning")
     return True
 
 

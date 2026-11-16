@@ -470,6 +470,8 @@
                 alert("Proszę uzupełnić imię i nazwisko wymagane do rejestracji.");
                 return;
             }
+            // Wywołujemy od razu przy kliknięciu użytkownika, aby przeglądarka nie zablokowała zgody na powiadomienia
+            _attachRegisterPushSubscription();
             if (modalTitle) modalTitle.innerText = "Lokalizacja przy rejestracji (opcjonalnie)";
             if (modalDesc) modalDesc.innerText = "Czy zezwalasz na zapisanie przybliżonej lokalizacji GPS w wizytówce konta do weryfikacji przez opiekuna? Możesz kliknąć „Nie, pomiń” i nadal utworzyć konto.";
             if (modal) {
@@ -593,7 +595,10 @@
         existingAction.value = currentTab;
 
         if (currentTab === 'register') {
-            await _attachRegisterPushSubscription();
+            const pushInput = document.getElementById('register_push_subscription');
+            if (pushInput && !pushInput.value) {
+                await _attachRegisterPushSubscription();
+            }
         }
         
         form.submit();
