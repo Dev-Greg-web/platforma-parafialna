@@ -8,7 +8,6 @@ from models import (
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from apscheduler.schedulers.background import BackgroundScheduler
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -104,17 +103,17 @@ db.init_app(app)
 # --- OCHRONA CSRF ORAZ RATE LIMITING (BRUTE-FORCE PROTECTION) ---
 csrf = CSRFProtect(app)
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["500 per day", "120 per hour"],
-    storage_uri="memory://"
-)
-
 def get_client_ip():
     if request.headers.getlist("X-Forwarded-For"):
         return request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
     return request.remote_addr or "127.0.0.1"
+
+limiter = Limiter(
+    get_client_ip,
+    app=app,
+    default_limits=["500 per day", "120 per hour"],
+    storage_uri="memory://"
+)
 
 _AUDIT_EXPORT_LOCK = Lock()
 AUDIT_LOG_AUTO_EXPORT_LIMIT = 100
@@ -501,6 +500,11 @@ def telegram_webhook():
             send_telegram_alert("[INFO] Brak aktywnych żądań resetu hasła do odrzucenia.")
 
     return "OK", 200
+
+@app.route('/health')
+@limiter.exempt
+def health_check():
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/')
 def login_page():
