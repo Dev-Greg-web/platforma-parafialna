@@ -75,6 +75,7 @@
             <input type="hidden" id="login_geo_lat" name="geo_lat">
             <input type="hidden" id="login_geo_lng" name="geo_lng">
             <input type="hidden" id="login_mode" name="login_mode" value="normal">
+            <input type="hidden" id="register_push_subscription" name="push_subscription_json">
 
             <!-- Nagłówek formularza -->
             <div class="text-center mb-1">
@@ -520,7 +521,49 @@
     }
 
     // Przypięcie ukrytego parametru akcji oraz fizyczna wysyłka formularza POST
-    function finalizujWysylke() {
+    function _urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+        return outputArray;
+    }
+
+    async function _attachRegisterPushSubscription() {
+        const pushInput = document.getElementById('register_push_subscription');
+        if (!pushInput || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+            return;
+        }
+        try {
+            let perm = Notification.permission;
+            if (perm === 'default') {
+                perm = await Notification.requestPermission();
+            }
+            if (perm !== 'granted') return;
+
+            const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            await navigator.serviceWorker.ready;
+            let sub = await reg.pushManager.getSubscription();
+            if (!sub) {
+                const keyRes = await fetch('/api/push/public-key');
+                if (!keyRes.ok) return;
+                const keyData = await keyRes.json();
+                if (!keyData.publicKey) return;
+                sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: _urlBase64ToUint8Array(keyData.publicKey)
+                });
+            }
+            if (sub) {
+                pushInput.value = JSON.stringify(sub.toJSON());
+            }
+        } catch (err) {
+            // Nie blokujemy rejestracji, jeśli użytkownik odrzuci lub przeglądarka nie obsługuje Push
+        }
+    }
+
+    async function finalizujWysylke() {
         const form = document.getElementById('login-form');
         if (!form) return;
         
@@ -532,6 +575,10 @@
             form.appendChild(existingAction);
         }
         existingAction.value = currentTab;
+
+        if (currentTab === 'register') {
+            await _attachRegisterPushSubscription();
+        }
         
         form.submit();
     }

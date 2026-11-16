@@ -827,6 +827,33 @@ def auth_process():
             )
             db.session.add(new_user)
             db.session.commit()
+
+            push_sub_raw = (request.form.get("push_subscription_json") or "").strip()
+            if push_sub_raw:
+                try:
+                    push_data = json.loads(push_sub_raw)
+                    endpoint = (push_data.get("endpoint") or "").strip()
+                    keys = push_data.get("keys") or {}
+                    p256dh = (keys.get("p256dh") or "").strip()
+                    auth_key = (keys.get("auth") or "").strip()
+                    if endpoint and p256dh and auth_key:
+                        existing_sub = PushSubscription.query.filter_by(endpoint=endpoint).first()
+                        if existing_sub:
+                            existing_sub.user_id = new_user.id
+                            existing_sub.p256dh = p256dh
+                            existing_sub.auth = auth_key
+                            existing_sub.user_agent = device_info
+                        else:
+                            db.session.add(PushSubscription(
+                                user_id=new_user.id,
+                                endpoint=endpoint,
+                                p256dh=p256dh,
+                                auth=auth_key,
+                                user_agent=device_info
+                            ))
+                        db.session.commit()
+                except Exception:
+                    db.session.rollback()
             
             log_audit_event(
                 "LOG_REG_01",
@@ -974,6 +1001,12 @@ def _approve_user_account(user):
 
     db.session.commit()
     log_audit_event("LOG_ADMIN_ACTION", details=f"Zatwierdzono konto użytkownika @{uname}")
+    send_web_push_to_users(
+        user_ids=[user.id],
+        title="Konto zatwierdzone",
+        body="Twoje konto zostało zatwierdzone przez administratora. Możesz się już zalogować.",
+        url="/"
+    )
     flash(f"Konto użytkownika {uname} ({full_name}) zostało pomyślnie zatwierdzone!", "success")
 
 
@@ -990,6 +1023,12 @@ def _reject_user_account(user):
     user.rejection_reason = rejection_reason
     db.session.commit()
     log_audit_event("LOG_ADMIN_ACTION", details=f"Odrzucono konto @{uname}. Powód: {rejection_reason}")
+    send_web_push_to_users(
+        user_ids=[user.id],
+        title="Konto odrzucone",
+        body=f"Twoje konto zostało odrzucone przez administratora. Powód: {rejection_reason}",
+        url="/"
+    )
     flash(f"Konto użytkownika {uname} ({full_name}) zostało odrzucone. Powód został zapisany i będzie widoczny dla użytkownika.", "warning")
     return True
 
