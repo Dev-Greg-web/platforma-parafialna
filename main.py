@@ -517,7 +517,22 @@ def login_page():
         elif session.get('user_role') == 'ksiądz':
             return redirect(url_for('ksDash'))
         return redirect(url_for('dashboard_page'))
-    return render_template('login.html')
+
+    rejected_banner = None
+    approved_banner = None
+    pending_id = session.get('pending_registration_user_id')
+    if pending_id:
+        pending_user = Users.query.get(pending_id)
+        if not pending_user:
+            session.pop('pending_registration_user_id', None)
+        elif not pending_user.is_approved and (getattr(pending_user, 'verification_status', None) == 'REJECTED' or pending_user.rejection_reason):
+            powod = (pending_user.rejection_reason or "Brak podanego powodu.").strip()
+            rejected_banner = f"Twoje konto zostało odrzucone przez administratora. Powód odrzucenia: {powod}"
+        elif pending_user.is_approved:
+            approved_banner = "Twoje konto zostało zatwierdzone przez administratora! Możesz się już zalogować."
+            session.pop('pending_registration_user_id', None)
+
+    return render_template('login.html', rejected_banner=rejected_banner, approved_banner=approved_banner)
 
 @app.route("/auth_process", methods=['POST'])
 @limiter.limit("5 per minute")
@@ -827,6 +842,7 @@ def auth_process():
             )
             db.session.add(new_user)
             db.session.commit()
+            session['pending_registration_user_id'] = new_user.id
 
             push_sub_raw = (request.form.get("push_subscription_json") or "").strip()
             if push_sub_raw:
