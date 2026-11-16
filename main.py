@@ -129,6 +129,24 @@ _AUDIT_EVENT_CATEGORY_STYLES = {
 }
 
 
+def _sign_reg_status_token(user_id):
+    from itsdangerous import URLSafeTimedSerializer
+    s = URLSafeTimedSerializer(app.secret_key, salt="reg-status")
+    return s.dumps({"uid": int(user_id)})
+
+
+def _verify_reg_status_token(token, max_age=2592000):
+    if not token:
+        return None
+    from itsdangerous import URLSafeTimedSerializer
+    s = URLSafeTimedSerializer(app.secret_key, salt="reg-status")
+    try:
+        data = s.loads(token, max_age=max_age)
+        return int(data.get("uid"))
+    except Exception:
+        return None
+
+
 def _extract_drive_folder_id(raw_val):
     """Wyciąga czyste ID folderu Google Drive z podanego ID lub pełnego linku."""
     val = (raw_val or "").strip()
@@ -520,7 +538,8 @@ def login_page():
 
     rejected_banner = None
     approved_banner = None
-    pending_id = session.get('pending_registration_user_id')
+    token_uid = _verify_reg_status_token(request.args.get('reg_status'))
+    pending_id = token_uid or session.get('pending_registration_user_id')
     if pending_id:
         pending_user = Users.query.get(pending_id)
         if not pending_user:
@@ -528,6 +547,8 @@ def login_page():
         elif not pending_user.is_approved and (getattr(pending_user, 'verification_status', None) == 'REJECTED' or pending_user.rejection_reason):
             powod = (pending_user.rejection_reason or "Brak podanego powodu.").strip()
             rejected_banner = f"Twoje konto zostało odrzucone przez administratora. Powód odrzucenia: {powod}"
+            session['pending_registration_user_id'] = pending_user.id
+            session.permanent = True
         elif pending_user.is_approved:
             approved_banner = "Twoje konto zostało zatwierdzone przez administratora! Możesz się już zalogować."
             session.pop('pending_registration_user_id', None)
@@ -843,6 +864,7 @@ def auth_process():
             db.session.add(new_user)
             db.session.commit()
             session['pending_registration_user_id'] = new_user.id
+            session.permanent = True
 
             push_sub_raw = (request.form.get("push_subscription_json") or "").strip()
             if push_sub_raw:
@@ -1021,7 +1043,7 @@ def _approve_user_account(user):
         user_ids=[user.id],
         title="Konto zatwierdzone",
         body="Twoje konto zostało zatwierdzone przez administratora. Możesz się już zalogować.",
-        url="/"
+        url=f"/?reg_status={_sign_reg_status_token(user.id)}"
     )
     push_info = " Wysłano powiadomienie Push." if sent_count > 0 else " (Brak aktywnej subskrypcji Push — zobaczy informację na stronie logowania)."
     flash(f"Konto użytkownika {uname} ({full_name}) zostało pomyślnie zatwierdzone!{push_info}", "success")
@@ -1044,7 +1066,7 @@ def _reject_user_account(user):
         user_ids=[user.id],
         title="Konto odrzucone",
         body=f"Twoje konto zostało odrzucone przez administratora. Powód: {rejection_reason}",
-        url="/"
+        url=f"/?reg_status={_sign_reg_status_token(user.id)}"
     )
     push_info = " Wysłano powiadomienie Push." if sent_count > 0 else " (Brak aktywnej subskrypcji Push — zobaczy powód na stronie logowania)."
     flash(f"Konto użytkownika {uname} ({full_name}) zostało odrzucone.{push_info}", "warning")
